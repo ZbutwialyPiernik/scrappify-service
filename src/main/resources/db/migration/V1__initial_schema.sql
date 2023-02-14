@@ -1,24 +1,26 @@
 create table "site"
 (
-    "id"                  BIGSERIAL NOT NULL PRIMARY KEY,
-    "name"                VARCHAR   NOT NULL UNIQUE,
-    "host"                VARCHAR   NOT NULL UNIQUE
+    "id"   BIGSERIAL NOT NULL PRIMARY KEY,
+    "name" VARCHAR   NOT NULL UNIQUE,
+    "host" VARCHAR   NOT NULL UNIQUE
 );
 
 create table "product"
 (
-    "id"                  BIGSERIAL NOT NULL PRIMARY KEY,
-    "name"                VARCHAR   NOT NULL,
-    "product_code"        VARCHAR   NOT NULL,
-    "url"                 VARCHAR   NOT NULL,
-    "fetch_cron"          VARCHAR   NOT NULL,
-    "site_id"             BIGINT    NOT NULL
+    "id"           BIGSERIAL NOT NULL PRIMARY KEY,
+    "name"         VARCHAR   NOT NULL,
+    "product_code" VARCHAR   NOT NULL,
+    "url"          VARCHAR   NOT NULL,
+    "fetch_cron"   VARCHAR   NOT NULL,
+    "site_id"      BIGINT    NOT NULL
 );
 
 create table "product_price"
 (
     "id"         BIGSERIAL      NOT NULL PRIMARY KEY,
     "price"      DECIMAL(21, 2) NOT NULL,
+    "name"       VARCHAR,
+    "fetch_time" TIMESTAMP      NOT NULL,
     "currency"   VARCHAR,
     "product_id" BIGINT         NOT NULL
 );

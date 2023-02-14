@@ -6,8 +6,12 @@ import scala.concurrent.Future
 
 trait SiteProductScheduler {
 
-  def cronScheduleProduct(SiteProduct: SiteProduct): Future[Unit]
+  def cronSchedule(SiteProduct: SiteProduct): Future[Unit]
 
-  def instantScheduleProduct(SiteProduct: SiteProduct): Future[Unit]
+  def updateCronSchedule(SiteProduct: SiteProduct): Future[Unit]
+  
+  def cancelCronSchedule(SiteProduct: SiteProduct): Future[Unit]
+  
+  def instantSchedule(SiteProduct: SiteProduct): Future[Unit]
 
 }

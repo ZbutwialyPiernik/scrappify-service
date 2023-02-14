@@ -1,7 +1,7 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
 import com.zbutwialypiernik.scrappify.common.ServiceError
-import com.zbutwialypiernik.scrappify.product.SiteProduct
+import io.lemonlabs.uri.AbsoluteUrl
 
 import java.time.Instant
 import java.util.Currency
@@ -14,8 +14,8 @@ case class ScrappingResult(price: BigDecimal,
 
 trait Scrapper {
 
-  def execute(siteProduct: SiteProduct): Future[Either[ServiceError, ScrappingResult]]
+  def execute(url: AbsoluteUrl): Future[Either[ServiceError, ScrappingResult]]
 
-  def supports(siteProduct: SiteProduct): Boolean
+  def supports(url: AbsoluteUrl): Boolean
 
 }

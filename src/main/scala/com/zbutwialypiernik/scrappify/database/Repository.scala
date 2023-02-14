@@ -1,36 +1,43 @@
 package com.zbutwialypiernik.scrappify.database
 
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
-import com.zbutwialypiernik.scrappify.product.{SiteProduct, SiteProductSnapshot}
+import com.zbutwialypiernik.scrappify.product.SiteProduct
 import com.zbutwialypiernik.scrappify.site.Site
+import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot
 import cron4s.Cron
 import cron4s.expr.CronExpr
 import io.lemonlabs.uri.{AbsoluteUrl, Host}
 import slick.ast.BaseTypedType
-import slick.dbio.{DBIO, Effect}
+import slick.dbio.DBIO
 import slick.jdbc.JdbcType
-import slick.lifted.AbstractTable
-import slick.sql.FixedSqlAction
 
 import java.time.Instant
 import java.util.Currency
 
-abstract class Repository[T <: AbstractTable[_], I: BaseTypedType](val database: SqlDatabase) extends CustomType {
+trait Entity[PK, E <: Entity[PK, E]] {
+
+  def id: PK
+
+  def copyWithId(int: PK): E
+
+}
+
+trait IdentifyableTable[PK] {
+  def id: slick.lifted.Rep[PK]
+}
+
+abstract class Repository[T <: Table[E] with IdentifyableTable[PK], E <: Entity[PK, E], PK: BaseTypedType](val database: SqlDatabase) extends CustomType {
 
   def table: TableQuery[T]
 
-  protected def getId(row: T): Rep[I]
+  def findById(id: PK): DBIO[Option[E]] = table.filter(_.id === id).result.headOption
 
-  private def filterById(id: I): Query[T, T#TableElementType, Seq] = table.filter(getId(_) === id)
+  def create(entity: E): DBIO[Int] = table += entity
 
-  def findById(id: I): DBIO[Option[T#TableElementType]] = filterById(id).result.headOption
-
-  def getById(id: I): DBIO[T#TableElementType] = filterById(id).result.head
-
-  def create(model: T#TableElementType): DBIO[Int] = (table += model)
-
-  //def createAndFetch(model: T#TableElementType): DBIO[T] =
-    //database.run((table returning getById(_)) += model)
+  def createAndFetch(entity: E): DBIO[E] = {
+    val insertQuery = table returning table.map(_.id) into ((row, id) => row.copyWithId(id))
+    insertQuery += entity
+  }
 
 }
 
@@ -68,7 +75,8 @@ object Repository extends CustomType {
   val siteProducts = TableQuery[SiteProducts]
   val siteProductPrices = TableQuery[SiteProductSnapshots]
 
-  class Sites(tag: Tag) extends Table[Site](tag, "site") {
+  class Sites(tag: Tag) extends Table[Site](tag, "site")
+    with IdentifyableTable[Int]  {
 
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
 
@@ -82,7 +90,8 @@ object Repository extends CustomType {
 
   }
 
-  class SiteProducts(tag: Tag) extends Table[SiteProduct](tag, "product") {
+  class SiteProducts(tag: Tag) extends Table[SiteProduct](tag, "product")
+      with IdentifyableTable[Int] {
 
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
 
@@ -104,19 +113,23 @@ object Repository extends CustomType {
 
   }
 
-  class SiteProductSnapshots(tag: Tag) extends Table[SiteProductSnapshot](tag, "product_price") {
+  class SiteProductSnapshots(tag: Tag) extends Table[SiteProductSnapshot](tag, "product_price")
+    with IdentifyableTable[Int] {
 
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
 
     def price = column[BigDecimal]("price")
 
     def currency = column[Option[Currency]]("currency")
-    def fetchTime= column[Instant]("fetch_time")
+
+    def name = column[Option[String]]("name")
+
+    def fetchTime = column[Instant]("fetch_time")
 
     def productId = column[Int]("product_id")
 
     def * =
-      (id, price, currency, fetchTime, productId) <>
+      (id, price, currency, name, fetchTime, productId) <>
         (SiteProductSnapshot.tupled, SiteProductSnapshot.unapply)
 
     def product = foreignKey("product", productId, siteProducts)(_.id, ForeignKeyAction.Restrict, ForeignKeyAction.Restrict)

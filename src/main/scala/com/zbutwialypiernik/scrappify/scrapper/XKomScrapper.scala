@@ -1,6 +1,5 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
-import com.zbutwialypiernik.scrappify.product.SiteProduct
 import net.ruippeixotog.scalascraper.browser.Browser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
@@ -23,9 +22,7 @@ class XKomScrapper(clock: Clock, browser: Browser)(implicit executionContext: Ex
   override def findCurrency(document: Document): Option[Currency] = Some(Currency.getInstance("PLN"))
 
   override def findProductName(document: Document): Option[String] = document >?> text("h1")
-
-  override def supports(siteProduct: SiteProduct): Boolean = siteProduct.url.host.value == "x-kom.pl"
-
-  override def supportedHosts: Set[String] = Set("x-kom.pl")
+  
+  override def supportedHosts: Set[String] = Set("x-kom.pl", "localhost")
 
 }

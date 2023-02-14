@@ -6,7 +6,9 @@ import com.softwaremill.macwire.wire
 import com.typesafe.scalalogging.StrictLogging
 import com.zbutwialypiernik.scrappify.common.ServiceError
 import com.zbutwialypiernik.scrappify.config.{DatabaseConfiguration, SchedulerConfiguration}
-import com.zbutwialypiernik.scrappify.scrapper.{ScrappingResult, ScrappingTask}
+import com.zbutwialypiernik.scrappify.scrapper.ScrappingTask
+import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot
+import io.lemonlabs.uri.AbsoluteUrl
 import org.postgresql.ds.PGSimpleDataSource
 
 import javax.sql.DataSource
@@ -18,29 +20,24 @@ class SchedulerModule(val databaseConfiguration: DatabaseConfiguration,
                       val schedulerConfiguration: SchedulerConfiguration,
                       val scrappingTask: ScrappingTask)(implicit executionContext: ExecutionContext) extends StrictLogging {
 
-  lazy val dbSiteProductScheduler = wire[DbSiteProductScheduler]
+  lazy val siteProductScheduler: SiteProductScheduler = wire[DbSiteProductScheduler]
 
-   val task: RecurringTaskWithPersistentSchedule[ScheduleAndInt] = Tasks.recurringWithPersistentSchedule("site-product-scrapper", classOf[ScheduleAndInt])
+   val task: RecurringTaskWithPersistentSchedule[ScheduleAndString] = Tasks.recurringWithPersistentSchedule("cron-site-product-scrapper", classOf[ScheduleAndString])
     .execute((instance, _) => {
-      Await.result(scrappingTask.execute(instance.getData.productId)
+      val productId = instance.getId.toInt
+      val url = AbsoluteUrl.parse(instance.getData.url)
+      logger.info(s"Starting a new scrapping task for ${instance.getData.url} for ")
+
+      Await.result(scrappingTask.execute(productId, url)
         .value
         .andThen {
-          case Success(value) => value match {
-            case Left(error) => logger.error(s"Service error in ${instance.getTaskName}#${instance.getId} for product ${instance.getData.productId}", error.message)
-            case Right(result) => logger.info(s"Fetched new data for product ${instance.getData.productId}, $result")
-          }
-          case Failure(exception) => logger.error(s"Uncaught exception in ${instance.getTaskName}#${instance.getId} for product ${instance.getData.productId}", exception)
+          case Success(Left(error: ServiceError)) => logger.error(s"Service error in ${instance.getTaskName} for product $productId at $url: ${error.message}")
+          case Success(Right(result: SiteProductSnapshot)) => logger.info(s"Fetched new data for product $productId at $url, $result")
+          case Failure(exception) => logger.error(s"Uncaught exception in ${instance.getTaskName}#${instance.getId} for product $productId", exception)
         }, Duration.Inf)
     })
 
-  def scheduler: Scheduler = {
-    Scheduler.create(dataSource, task)
-      .threads(schedulerConfiguration.threads)
-      .registerShutdownHook()
-      .build()
-  }
-
-  def dataSource: DataSource = {
+  val dataSource: DataSource = {
     val dataSource = new PGSimpleDataSource()
     dataSource.setURL(databaseConfiguration.url)
     dataSource.setDatabaseName(databaseConfiguration.name)
@@ -48,6 +45,13 @@ class SchedulerModule(val databaseConfiguration: DatabaseConfiguration,
     dataSource.setPassword(databaseConfiguration.password)
 
     dataSource
+  }
+
+  val scheduler: Scheduler = {
+    Scheduler.create(dataSource, task)
+      .threads(schedulerConfiguration.threads)
+      .registerShutdownHook()
+      .build()
   }
 
 }

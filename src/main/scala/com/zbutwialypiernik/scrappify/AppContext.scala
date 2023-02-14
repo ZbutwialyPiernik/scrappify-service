@@ -20,12 +20,12 @@ trait AppContext {
 
   lazy val configurationModule = new ConfigurationModule(configSource)
   lazy val databaseModule = new DatabaseModule(config, configurationModule.databaseConfiguration)
-  lazy val siteModule = new SiteModule(databaseModule.siteRepository)
+  lazy val siteModule = new SiteModule(databaseModule)
   lazy val schedulerModule: SchedulerModule = new SchedulerModule(configurationModule.databaseConfiguration, configurationModule.schedulerConfiguration, scrappingModule.scrappingTask)
-  lazy val siteProductModule: SiteProductModule = new SiteProductModule(databaseModule.siteProductRepository, siteModule.siteService, schedulerModule.dbSiteProductScheduler)
-  lazy val siteProductSnapshotModule: SiteSnapshotModule = new SiteSnapshotModule(databaseModule.siteProductSnapshotRepository)
-  lazy val scrappingModule: ScrappingModule = new ScrappingModule(JsoupBrowser(), clock, databaseModule.siteProductRepository, siteProductSnapshotModule.siteProductSnapshotService)
-  lazy val apiV1Module = new ApiV1Module(siteProductModule.productService, siteModule.siteService)
+  lazy val siteProductModule: SiteProductModule = new SiteProductModule(databaseModule, siteModule.siteService, schedulerModule.siteProductScheduler)
+  lazy val siteProductSnapshotModule: SiteSnapshotModule = new SiteSnapshotModule(databaseModule)
+  lazy val scrappingModule: ScrappingModule = new ScrappingModule(JsoupBrowser(), clock, siteProductSnapshotModule.siteProductSnapshotService)
+  lazy val apiV1Module = new ApiV1Module(siteProductModule.productService, siteModule.siteService, schedulerModule.siteProductScheduler)
 
   implicit def executionContext: ExecutionContext
   implicit def system: ActorSystem

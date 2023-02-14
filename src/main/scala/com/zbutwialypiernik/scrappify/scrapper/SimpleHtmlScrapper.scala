@@ -2,7 +2,7 @@ package com.zbutwialypiernik.scrappify.scrapper
 
 import com.typesafe.scalalogging.StrictLogging
 import com.zbutwialypiernik.scrappify.common.ServiceError
-import com.zbutwialypiernik.scrappify.product.SiteProduct
+import io.lemonlabs.uri.AbsoluteUrl
 import net.ruippeixotog.scalascraper.browser.Browser
 import net.ruippeixotog.scalascraper.model.Document
 
@@ -10,8 +10,8 @@ import java.time.Clock
 import java.util.Currency
 import scala.concurrent.{ExecutionContext, Future}
 
-case class PriceNotExtractedError(product: SiteProduct, siteBody: String)
-  extends ServiceError(s"Could not extract price for product ${product.name}#${product.id} from ${product.url.toString}")
+case class PriceNotExtractedError(url: AbsoluteUrl, siteBody: String)
+  extends ServiceError(s"Could not extract price from $url")
 
 abstract class SimpleHtmlScrapper(clock: Clock, browser: Browser)(implicit executionContext: ExecutionContext) extends Scrapper with StrictLogging {
 
@@ -23,8 +23,8 @@ abstract class SimpleHtmlScrapper(clock: Clock, browser: Browser)(implicit execu
 
   def supportedHosts: Set[String]
 
-  override def execute(product: SiteProduct): Future[Either[ServiceError, ScrappingResult]] = {
-    val productUrl = product.url.toString()
+  override def execute(url: AbsoluteUrl): Future[Either[ServiceError, ScrappingResult]] = {
+    val productUrl = url.toString()
 
     Future(browser.get(productUrl))
       .map(document => {
@@ -37,7 +37,7 @@ abstract class SimpleHtmlScrapper(clock: Clock, browser: Browser)(implicit execu
             result
           })
           .toRight({
-            val error = PriceNotExtractedError(product, document.toHtml)
+            val error = PriceNotExtractedError(url, document.toHtml)
 
             logger.info(error.message)
             logger.debug(s"Could not find price in $productUrl \n${error.siteBody}")
@@ -47,6 +47,6 @@ abstract class SimpleHtmlScrapper(clock: Clock, browser: Browser)(implicit execu
       })
   }
 
-  override def supports(siteProduct: SiteProduct): Boolean = siteProduct.url.host.value ==
+  override def supports(url: AbsoluteUrl): Boolean = supportedHosts.contains(url.host.value)
 
 }

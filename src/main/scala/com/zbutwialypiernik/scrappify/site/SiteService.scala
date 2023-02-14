@@ -1,12 +1,14 @@
 package com.zbutwialypiernik.scrappify.site
 
+import com.typesafe.scalalogging.StrictLogging
 import com.zbutwialypiernik.scrappify.api.v1.dto.SiteRequest
 import com.zbutwialypiernik.scrappify.common.Page
 import io.lemonlabs.uri.Host
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
-class SiteService(val siteRepository: SiteRepository)(implicit executionContext: ExecutionContext) {
+class SiteService(val siteRepository: SiteRepository)(implicit executionContext: ExecutionContext) extends StrictLogging {
 
   def findById(id: Int): Future[Option[Site]] = siteRepository.database.run {
     siteRepository.findById(id)
@@ -18,9 +20,10 @@ class SiteService(val siteRepository: SiteRepository)(implicit executionContext:
 
   def createSite(request: SiteRequest): Future[Site] = {
     siteRepository.database.run {
-      siteRepository.create(Site(0, request.name, request.host)).flatMap {
-        siteRepository.getById
-      }
+      siteRepository.createAndFetch(Site(0, request.name, request.host))
+    }.andThen {
+      case Success(value) => logger.info(s"Created new site $value")
+      case Failure(error) => logger.error(s"Could not create new site from request $request", error)
     }
   }
 

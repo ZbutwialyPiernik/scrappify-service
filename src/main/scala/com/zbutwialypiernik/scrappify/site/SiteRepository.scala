@@ -7,9 +7,8 @@ import io.lemonlabs.uri.Host
 
 import scala.concurrent.Future
 
-class SiteRepository(database: SqlDatabase) extends Repository[Sites, Int](database) {
+class SiteRepository(database: SqlDatabase) extends Repository[Sites, Site, Int](database) {
   override def table: TableQuery[Sites] = sites
-  override protected def getId(row: Sites) = row.id
 
   def findByHost(host: Host): Future[Option[Site]] =
     database.run(sites.filter(_.host === host).result.headOption)

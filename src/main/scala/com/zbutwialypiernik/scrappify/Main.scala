@@ -15,6 +15,10 @@ object Main extends App
 
   logger.info("Starting up scrappify server")
   databaseModule.sqlDatabase.updateSchema()
-  Http().newServerAt("0.0.0.0", configurationModule.serviceConfiguration.port).bindFlow(apiV1Module.routes)
-  databaseModule.sqlDatabase.close()
+  Http()
+    .newServerAt("0.0.0.0", configurationModule.serviceConfiguration.port)
+    .bindFlow(apiV1Module.routes)
+
+  schedulerModule.scheduler.start()
+  //databaseModule.sqlDatabase.close()
 }
