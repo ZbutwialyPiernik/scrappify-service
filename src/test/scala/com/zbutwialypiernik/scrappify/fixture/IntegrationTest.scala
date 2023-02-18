@@ -50,7 +50,7 @@ trait IntegrationTest
           .resolve()
       }
 
-      context.databaseModule.sqlDatabase.updateSchema()
+      context.init()
     }
   }
 

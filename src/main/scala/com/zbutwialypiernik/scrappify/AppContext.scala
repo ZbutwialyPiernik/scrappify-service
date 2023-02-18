@@ -34,4 +34,9 @@ trait AppContext {
   def config: Config = ConfigFactory.load()
   def configSource: ConfigSource = ConfigSource.fromConfig(config)
 
+  def init(): Unit = {
+    databaseModule.init()
+    schedulerModule.init()
+  }
+
 }

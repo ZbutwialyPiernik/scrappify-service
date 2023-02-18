@@ -14,11 +14,11 @@ object Main extends App
   implicit val executionContext: ExecutionContext = system.dispatcher
 
   logger.info("Starting up scrappify server")
-  databaseModule.sqlDatabase.updateSchema()
+  init()
+  logger.info("App context is up and running")
   Http()
     .newServerAt("0.0.0.0", configurationModule.serviceConfiguration.port)
     .bindFlow(apiV1Module.routes)
 
-  schedulerModule.scheduler.start()
   //databaseModule.sqlDatabase.close()
 }

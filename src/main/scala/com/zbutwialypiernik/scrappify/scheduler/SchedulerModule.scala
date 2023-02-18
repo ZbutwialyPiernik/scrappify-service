@@ -16,17 +16,17 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
 
-class SchedulerModule(val databaseConfiguration: DatabaseConfiguration,
-                      val schedulerConfiguration: SchedulerConfiguration,
-                      val scrappingTask: ScrappingTask)(implicit executionContext: ExecutionContext) extends StrictLogging {
+class SchedulerModule(databaseConfiguration: DatabaseConfiguration,
+                      schedulerConfiguration: SchedulerConfiguration,
+                      scrappingTask: ScrappingTask)(implicit executionContext: ExecutionContext) extends StrictLogging {
 
   lazy val siteProductScheduler: SiteProductScheduler = wire[DbSiteProductScheduler]
 
-   val task: RecurringTaskWithPersistentSchedule[ScheduleAndString] = Tasks.recurringWithPersistentSchedule("cron-site-product-scrapper", classOf[ScheduleAndString])
+  private val task: RecurringTaskWithPersistentSchedule[ScheduleAndString] = Tasks.recurringWithPersistentSchedule("cron-site-product-scrapper", classOf[ScheduleAndString])
     .execute((instance, _) => {
       val productId = instance.getId.toInt
       val url = AbsoluteUrl.parse(instance.getData.url)
-      logger.info(s"Starting a new scrapping task for ${instance.getData.url} for ")
+      logger.info(s"Starting a new scrapping task for product $productId at $url")
 
       Await.result(scrappingTask.execute(productId, url)
         .value
@@ -37,7 +37,7 @@ class SchedulerModule(val databaseConfiguration: DatabaseConfiguration,
         }, Duration.Inf)
     })
 
-  val dataSource: DataSource = {
+  private val dataSource: DataSource = {
     val dataSource = new PGSimpleDataSource()
     dataSource.setURL(databaseConfiguration.url)
     dataSource.setDatabaseName(databaseConfiguration.name)
@@ -47,11 +47,15 @@ class SchedulerModule(val databaseConfiguration: DatabaseConfiguration,
     dataSource
   }
 
-  val scheduler: Scheduler = {
+  private val scheduler: Scheduler = {
     Scheduler.create(dataSource, task)
       .threads(schedulerConfiguration.threads)
       .registerShutdownHook()
       .build()
+  }
+
+  def init(): Unit = {
+    scheduler.start()
   }
 
 }

@@ -9,18 +9,7 @@ import slick.jdbc.JdbcProfile
 
 import scala.concurrent.Future
 
-final class SqlDatabase(db: slick.jdbc.JdbcBackend.Database, driver: JdbcProfile, databaseConfig: DatabaseConfiguration) {
-  def updateSchema(): Unit = {
-    val schemaLocations = driver match {
-      case slick.jdbc.PostgresProfile => List("db/migration")
-    }
-    val flyway = Flyway
-      .configure()
-      .locations(schemaLocations: _*)
-      .dataSource(databaseConfig.url, databaseConfig.user, databaseConfig.password)
-      .load()
-    val _ = flyway.migrate()
-  }
+final class SqlDatabase(db: slick.jdbc.JdbcBackend.Database) {
 
   def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = db.run(a)
 
@@ -31,9 +20,9 @@ final class SqlDatabase(db: slick.jdbc.JdbcBackend.Database, driver: JdbcProfile
 
 object SqlDatabase {
 
-  def create(config: Config, configuration: DatabaseConfiguration): SqlDatabase = {
+  def create(config: Config): SqlDatabase = {
     val db = Database.forConfig("scrappify.database", config = config)
-    new SqlDatabase(db, slick.jdbc.PostgresProfile, configuration)
+    new SqlDatabase(db)
   }
 
 }
