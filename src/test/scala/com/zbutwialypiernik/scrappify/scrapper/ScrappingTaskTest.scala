@@ -1,9 +1,9 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
 import com.zbutwialypiernik.scrappify.common.{AsyncResult, InternalServiceError}
-import com.zbutwialypiernik.scrappify.product.SiteProduct
-import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshotService
-import com.zbutwialypiernik.scrappify.support.CommonParams
+import com.zbutwialypiernik.scrappify.fixture.FakeDataGenerators
+import com.zbutwialypiernik.scrappify.snapshot.{SiteProductSnapshot, SiteProductSnapshotService}
+import io.lemonlabs.uri.AbsoluteUrl
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
@@ -13,37 +13,28 @@ import scala.concurrent.Future
 class ScrappingTaskTest extends AsyncWordSpec
   with Matchers
   with AsyncMockFactory
-  with CommonParams {
+  with FakeDataGenerators {
 
   val productSnapshotService = mock[SiteProductSnapshotService]
   val scrappingService = mock[ScrappingService]
+  val task = new ScrappingTask(productSnapshotService, scrappingService)
 
   "execute" when {
-    "product exists and scrapping service returns valid result" should {
+    "url is supported and scrapping service returns valid result" should {
       "register new snapshot" in {
-        val task = createTask(someProductProvider(validProduct))
+        val productId = randomNonNegativeInt()
+        val productUrl = randomUrl()
 
-        (scrappingService.performScrapping _).expects(validProduct).returning(AsyncResult.success(validScrappingResult))
-        (productSnapshotService.registerSnapshot _).expects(validProduct.id, validScrappingResult.price, validScrappingResult.currency, validScrappingResult.fetchTime).returning(Future.successful(validProductSnapshot))
+        val scrappingResult = fakeScrappingResult()
+        val snapshot = SiteProductSnapshot(randomNonNegativeInt(), scrappingResult.price, scrappingResult.currency, scrappingResult.name, scrappingResult.fetchTime, productId)
 
-        task.execute(validProduct.id).value map { result =>
+        (scrappingService.performScrapping _).expects(productUrl).returning(AsyncResult.success(scrappingResult))
+        (productSnapshotService.registerSnapshot _).expects(productId, scrappingResult).returning(Future.successful(snapshot))
+
+        task.execute(productId, productUrl).value map { result =>
           result.isRight shouldEqual true
           result match {
-            case Right(v) => v shouldEqual validProductSnapshot
-          }
-        }
-      }
-    }
-
-    "product does not exists" should {
-      "return product not found error" in {
-        val productId = 25
-        val task = createTask(emptyProductProvider)
-
-        task.execute(productId).value map { result =>
-          result.isLeft shouldEqual true
-          result match {
-            case Left(v) => v shouldEqual ProductNotFoundError(productId)
+            case Right(v) => v shouldEqual snapshot
           }
         }
       }
@@ -51,12 +42,12 @@ class ScrappingTaskTest extends AsyncWordSpec
 
     "product exists and scrapping service returns error" should {
       "pass down error" in {
-        val task = createTask(someProductProvider(validProduct))
+        val productId = randomNonNegativeInt()
+        val productUrl = randomUrl()
 
+        (scrappingService.performScrapping _).expects(productUrl).returning(AsyncResult.failure(InternalServiceError("some error")))
 
-        (scrappingService.performScrapping _).expects(validProduct).returning(AsyncResult.failure(InternalServiceError("some error")))
-
-        task.execute(validProduct.id).value map { result =>
+        task.execute(productId, productUrl).value map { result =>
           result.isLeft shouldEqual true
           result match {
             case Left(v) => v shouldEqual InternalServiceError("some error")
@@ -65,11 +56,5 @@ class ScrappingTaskTest extends AsyncWordSpec
       }
     }
   }
-
-  def createTask(productProvider: Int => Future[Option[SiteProduct]]): ScrappingTask = new ScrappingTask(productProvider, productSnapshotService, scrappingService)
-
-  def emptyProductProvider: Int => Future[Option[SiteProduct]] = _ => Future.successful(Option.empty)
-
-  def someProductProvider(siteProduct: SiteProduct): Int => Future[Option[SiteProduct]] = _ => Future.successful(Some(siteProduct))
 
 }

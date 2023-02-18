@@ -3,6 +3,7 @@ package com.zbutwialypiernik.scrappify.product
 import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
 import com.zbutwialypiernik.scrappify.api.v1.dto.ProductRequest
+import com.zbutwialypiernik.scrappify.common.AsyncResult.AsyncResult
 import com.zbutwialypiernik.scrappify.common.{Page, ServiceError}
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
 import com.zbutwialypiernik.scrappify.scheduler.SiteProductScheduler
@@ -26,7 +27,7 @@ class ProductService(productRepository: SiteProductRepository, siteService: Site
   def listProducts(siteId: Option[Int] = Option.empty[Int], name: Option[String] = Option.empty[String], page: Page): Future[Seq[SiteProduct]] =
     productRepository.list(siteId, name, page)
 
-  def create(request: ProductRequest): Future[Either[ServiceError, SiteProduct]] = {
+  def create(request: ProductRequest): AsyncResult[SiteProduct] = {
     val host = request.url.host
 
     EitherT.fromOptionF(siteService.findSiteByHost(host), UnsupportedSiteError(host))
@@ -42,7 +43,7 @@ class ProductService(productRepository: SiteProductRepository, siteService: Site
             case Failure(error) => logger.error(s"Could not create new product from request $request", error)
           }
           .map(Right(_))
-      }).value
+      })
   }
 
 }

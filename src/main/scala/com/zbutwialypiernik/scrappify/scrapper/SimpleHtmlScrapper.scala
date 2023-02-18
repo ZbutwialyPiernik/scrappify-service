@@ -1,6 +1,8 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
+import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
+import com.zbutwialypiernik.scrappify.common.AsyncResult.AsyncResult
 import com.zbutwialypiernik.scrappify.common.ServiceError
 import io.lemonlabs.uri.AbsoluteUrl
 import net.ruippeixotog.scalascraper.browser.Browser
@@ -23,10 +25,10 @@ abstract class SimpleHtmlScrapper(clock: Clock, browser: Browser)(implicit execu
 
   def supportedHosts: Set[String]
 
-  override def execute(url: AbsoluteUrl): Future[Either[ServiceError, ScrappingResult]] = {
+  override def execute(url: AbsoluteUrl): AsyncResult[ScrappingResult] = {
     val productUrl = url.toString()
 
-    Future(browser.get(productUrl))
+    EitherT(Future(browser.get(productUrl))
       .map(document => {
         findPrice(document)
           .map(price => {
@@ -44,7 +46,8 @@ abstract class SimpleHtmlScrapper(clock: Clock, browser: Browser)(implicit execu
 
             error
           })
-      })
+      }))
+
   }
 
   override def supports(url: AbsoluteUrl): Boolean = supportedHosts.contains(url.host.value)

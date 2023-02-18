@@ -30,7 +30,7 @@ private class ProductApi(val productService: ProductService, val siteProductSche
       },
       post {
         validatedEntity(as[ProductRequest]).apply { request =>
-          onSuccess(productService.create(request)) {
+          onSuccess(productService.create(request).value) {
             case Left(error: UnsupportedSiteError) => completeAsError(StatusCodes.Conflict, error.message)
             case Right(product) => complete(StatusCodes.Created, product)
           }

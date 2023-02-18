@@ -48,7 +48,7 @@ lazy val root = (project in file("."))
     "com.dimafeng"                  %% "testcontainers-scala-postgresql" % testcontainersVersion % Test,
     "com.typesafe.akka"             %% "akka-http-testkit"               % akkaHttpVersion       % Test,
     "com.typesafe.akka"             %% "akka-stream-testkit"             % akkaVersion           % Test,
-    "io.github.etspaceman"          %% "scalacheck-faker"                % "7.0.0"               % Test,
+    "com.github.javafaker"           % "javafaker"                       % "1.0.2"               % Test,
   )
 )
 

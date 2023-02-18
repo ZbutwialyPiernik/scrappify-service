@@ -13,8 +13,8 @@ case class ProductNotFoundError(siteId: Int) extends ServiceError(s"Product with
 class ScrappingTask(val productSnapshotService: SiteProductSnapshotService, val scrappingService: ScrappingService)(implicit executionContext: ExecutionContext) extends StrictLogging {
 
   def execute(id: Integer, url: AbsoluteUrl): AsyncResult[SiteProductSnapshot] = {
-    scrappingService.performScrapping(id, url)
-      .semiflatMap(result => productSnapshotService.registerSnapshot(id, result.price, result.currency, result.productName, result.fetchTime))
+    scrappingService.performScrapping(url)
+      .semiflatMap(result => productSnapshotService.registerSnapshot(id, result))
   }
 
 }

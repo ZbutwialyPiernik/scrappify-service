@@ -1,4 +1,4 @@
-package com.zbutwialypiernik.scrappify.support
+package com.zbutwialypiernik.scrappify.fixture
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Route
@@ -64,7 +64,7 @@ trait IntegrationTest
     val truncatesFuture = context.databaseModule.sqlDatabase.run(
       sql"SELECT table_name FROM information_schema.tables WHERE table_schema = '#$databaseName';".as[String]
     ).map {
-      names => names.map(name => SQLActionBuilder(List(s"TRUNCATE TABLE ${name} CASCADE"), SetUnit).asUpdate)
+      names => names.map(name => SQLActionBuilder(List(s"TRUNCATE TABLE $name CASCADE"), SetUnit).asUpdate)
     }
 
     Await.result(truncatesFuture.flatMap {

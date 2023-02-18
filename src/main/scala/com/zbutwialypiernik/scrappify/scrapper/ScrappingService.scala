@@ -7,12 +7,12 @@ import io.lemonlabs.uri.AbsoluteUrl
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class UnsupportedProductException(productId: Long, url: String) extends ServiceError(s"Scrapper for product $productId and $url not found")
+case class UnsupportedSiteException(url: String) extends ServiceError(s"Scrapper for site $url not found")
 
 class ScrappingService(scrappers: Set[Scrapper])(implicit executionContext: ExecutionContext) {
 
-  def performScrapping(productId: Int, url: AbsoluteUrl): AsyncResult[ScrappingResult] =
-    EitherT.fromOptionF(Future.successful(scrappers.find(_.supports(url: AbsoluteUrl))), UnsupportedProductException(productId, url.toString))
-      .flatMapF(_.execute(url))
+  def performScrapping(url: AbsoluteUrl): AsyncResult[ScrappingResult] =
+    EitherT.fromOptionF(Future.successful(scrappers.find(_.supports(url: AbsoluteUrl))), UnsupportedSiteException(url.toString))
+      .flatMap(_.execute(url))
 
 }

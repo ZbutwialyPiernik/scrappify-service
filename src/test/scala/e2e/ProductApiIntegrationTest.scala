@@ -3,10 +3,12 @@ package e2e
 import akka.http.scaladsl.model.StatusCodes
 import com.zbutwialypiernik.scrappify.api.v1.dto.{ErrorResponse, ProductRequest, SiteRequest, ValidationErrorResponse}
 import com.zbutwialypiernik.scrappify.product.SiteProduct
-import com.zbutwialypiernik.scrappify.support.{CommonParams, IntegrationTest}
+import com.zbutwialypiernik.scrappify.fixture.{CommonParams, FakeDataGenerators, IntegrationTest}
 import io.lemonlabs.uri.{AbsoluteUrl, Host}
 
-class ProductApiIntegrationTest extends IntegrationTest with CommonParams {
+class ProductApiIntegrationTest extends IntegrationTest
+  with CommonParams
+  with FakeDataGenerators {
 
   lazy val siteService = context.siteModule.siteService
 
@@ -15,7 +17,7 @@ class ProductApiIntegrationTest extends IntegrationTest with CommonParams {
       "create product" in {
         siteService.createSite(SiteRequest(name = "Notebook site", Host.parse("notebook.com")))
 
-        val request = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("https://notebook.com/product/abcd1234"), "test", validCronOne)
+        val request = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("https://notebook.com/product/abcd1234"), "test", validCron())
 
         Post("/api/v1/product", request) ~> routes ~> check {
           status shouldEqual StatusCodes.Created
@@ -34,7 +36,7 @@ class ProductApiIntegrationTest extends IntegrationTest with CommonParams {
       "throw 409 error" in {
         siteService.createSite(SiteRequest(name = "Notebook site", Host.parse("notebook.com")))
 
-        val request = ProductRequest("Smartphone XZY", AbsoluteUrl.parse("https://smartphone.com/someproduct"), "test", validCronOne)
+        val request = ProductRequest("Smartphone XZY", AbsoluteUrl.parse("https://smartphone.com/someproduct"), "test", validCron())
 
         Post("/api/v1/product", request) ~> routes ~> check {
           status shouldEqual StatusCodes.Conflict
@@ -51,7 +53,7 @@ class ProductApiIntegrationTest extends IntegrationTest with CommonParams {
       "throw 400 error" in {
         siteService.createSite(SiteRequest(name = "Notebook site", Host.parse("notebook.com")))
 
-        val request = ProductRequest("", AbsoluteUrl.parse("https://notebook.com/someproduct"), "ABCD1234", validCronOne)
+        val request = ProductRequest("", AbsoluteUrl.parse("https://notebook.com/someproduct"), "ABCD1234", validCron())
 
         Post("/api/v1/product", request) ~> routes ~> check {
           status shouldEqual StatusCodes.BadRequest
@@ -68,5 +70,4 @@ class ProductApiIntegrationTest extends IntegrationTest with CommonParams {
       }
     }
   }
-
 }

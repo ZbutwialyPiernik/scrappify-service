@@ -1,14 +1,14 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
-import com.zbutwialypiernik.scrappify.support.CommonParams
+import com.zbutwialypiernik.scrappify.common.AsyncResult
+import com.zbutwialypiernik.scrappify.fixture.{CommonParams, FakeDataGenerators}
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.matchers.should._
 import org.scalatest.wordspec.AsyncWordSpec
 
-import scala.concurrent.Future
-
 class ScrappingServiceTest extends AsyncWordSpec
   with Matchers
+  with FakeDataGenerators
   with AsyncMockFactory
   with CommonParams {
 
@@ -16,32 +16,36 @@ class ScrappingServiceTest extends AsyncWordSpec
   val scrappingService = new ScrappingService(Set(scrapper))
 
   "performScrapping" when {
-    "product site has supported scrapper" should {
+    "url has supported scrapper" should {
       "execute scrapper and return results" in {
-        (scrapper.supports _).expects(validProduct).returning(true)
-        (scrapper.execute _).expects(validProduct).returning(Future.successful(Right(validScrappingResult)))
+        val url = randomUrl()
+        val scrappingResult = fakeScrappingResult()
 
-        scrappingService.performScrapping(validProduct).value map { result =>
+        (scrapper.supports _).expects(url).returning(true)
+        (scrapper.execute _).expects(url).returning(AsyncResult.success(scrappingResult))
+
+        scrappingService.performScrapping(url).value map { result =>
           result.isRight shouldEqual true
           result match {
-            case Right(v) => v shouldEqual validScrappingResult
+            case Right(v) => v shouldEqual scrappingResult
           }
         }
       }
     }
 
-    "product site does not have supported scrapper" should {
+    "url does not have supported scrapper" should {
       "not execute scrapper and return failure" in {
-        (scrapper.supports _).expects(validProduct).returning(false)
+        val url = randomUrl()
 
-        scrappingService.performScrapping(validProduct).value map { result =>
+        (scrapper.supports _).expects(url).returning(false)
+
+        scrappingService.performScrapping(url).value map { result =>
           result.isLeft shouldEqual true
           result match {
             case Left(exception) =>
-              exception shouldBe a [UnsupportedProductException]
+              exception shouldBe a [UnsupportedSiteException]
               exception should have(
-                Symbol("productId")(validProduct.id),
-                Symbol("url")(validProduct.url.toString)
+                Symbol("url")(url.toString())
               )
           }
         }
