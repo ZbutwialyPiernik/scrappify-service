@@ -3,13 +3,13 @@ package com.zbutwialypiernik.scrappify.product
 import com.zbutwialypiernik.scrappify.common.Page
 import com.zbutwialypiernik.scrappify.database.Repository.{SiteProducts, siteProductPrices, siteProducts}
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
-import com.zbutwialypiernik.scrappify.database.{Repository, SqlDatabase}
+import com.zbutwialypiernik.scrappify.database.{Repository}
 import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot
 import slick.dbio.{DBIOAction, NoStream}
 
 import scala.concurrent.Future
 
-class SiteProductRepository(database: SqlDatabase) extends Repository[SiteProducts, SiteProduct, Int](database) {
+class SiteProductRepository(database: Database) extends Repository[SiteProducts, SiteProduct, Int](database) {
 
   override def table: TableQuery[SiteProducts] = siteProducts
 

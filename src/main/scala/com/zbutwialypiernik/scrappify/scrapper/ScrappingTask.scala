@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext
 
 case class ProductNotFoundError(siteId: Int) extends ServiceError(s"Product with id $siteId not found")
 
-class ScrappingTask(val productSnapshotService: SiteProductSnapshotService, val scrappingService: ScrappingService)(implicit executionContext: ExecutionContext) extends StrictLogging {
+private class ScrappingTask(val productSnapshotService: SiteProductSnapshotService, val scrappingService: ScrappingService)(implicit executionContext: ExecutionContext) extends StrictLogging {
 
   def execute(id: Integer, url: AbsoluteUrl): AsyncResult[SiteProductSnapshot] = {
     scrappingService.performScrapping(url)

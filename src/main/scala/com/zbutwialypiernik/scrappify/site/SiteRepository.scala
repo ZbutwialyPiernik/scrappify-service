@@ -2,12 +2,12 @@ package com.zbutwialypiernik.scrappify.site
 import com.zbutwialypiernik.scrappify.common.Page
 import com.zbutwialypiernik.scrappify.database.Repository.{Sites, sites}
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
-import com.zbutwialypiernik.scrappify.database.{Repository, SqlDatabase}
+import com.zbutwialypiernik.scrappify.database.Repository
 import io.lemonlabs.uri.Host
 
 import scala.concurrent.Future
 
-class SiteRepository(database: SqlDatabase) extends Repository[Sites, Site, Int](database) {
+private class SiteRepository(database: Database) extends Repository[Sites, Site, Int](database) {
   override def table: TableQuery[Sites] = sites
 
   def findByHost(host: Host): Future[Option[Site]] =

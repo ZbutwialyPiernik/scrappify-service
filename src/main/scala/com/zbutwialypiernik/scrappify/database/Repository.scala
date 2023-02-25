@@ -26,7 +26,7 @@ trait IdentifyableTable[PK] {
   def id: slick.lifted.Rep[PK]
 }
 
-abstract class Repository[T <: Table[E] with IdentifyableTable[PK], E <: Entity[PK, E], PK: BaseTypedType](val database: SqlDatabase) extends CustomType {
+abstract class Repository[T <: Table[E] with IdentifyableTable[PK], E <: Entity[PK, E], PK: BaseTypedType](val database: Database) extends CustomType {
 
   def table: TableQuery[T]
 

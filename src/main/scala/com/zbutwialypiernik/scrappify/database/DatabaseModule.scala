@@ -1,14 +1,14 @@
 package com.zbutwialypiernik.scrappify.database
 
-import com.softwaremill.macwire._
 import com.typesafe.config.Config
 import com.zbutwialypiernik.scrappify.config.DatabaseConfiguration
 import org.flywaydb.core.Flyway
+import slick.jdbc.JdbcBackend.Database
 
 class DatabaseModule(config: Config, configuration: DatabaseConfiguration) {
-  lazy val sqlDatabase = wireWith(SqlDatabase.create _)
+  val database = Database.forConfig("scrappify.database", config = config)
 
-  def updateSchema(): Unit = {
+  def init(): Unit = {
     val schemaLocations = List("db/migration")
     val flyway = Flyway
       .configure()
@@ -16,10 +16,6 @@ class DatabaseModule(config: Config, configuration: DatabaseConfiguration) {
       .dataSource(configuration.url, configuration.user, configuration.password)
       .load()
     val _ = flyway.migrate()
-  }
-
-  def init(): Unit = {
-    updateSchema()
   }
 
 }

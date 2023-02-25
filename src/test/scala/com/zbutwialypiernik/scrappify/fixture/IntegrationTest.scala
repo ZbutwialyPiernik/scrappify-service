@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import com.dimafeng.testcontainers.PostgreSQLContainer
 import com.dimafeng.testcontainers.scalatest.TestContainerForAll
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import com.zbutwialypiernik.scrappify.AppContext
 import com.zbutwialypiernik.scrappify.api.v1.dto.JsonSupport
 import org.scalatest.BeforeAndAfterEach
@@ -34,34 +34,36 @@ trait IntegrationTest
 
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(60.seconds)
 
-  override def afterContainersStart(container: Containers): Unit = {
-    withContainers { container =>
-      context = new AppContext {
-        implicit lazy val system: ActorSystem = ActorSystem("scrappify")
-        implicit lazy val executionContext: ExecutionContext = system.dispatcher
+  override def afterContainersStart(containers: Containers) = createContext(containers)
 
-        override val config = ConfigFactory.parseMap(asJava(Map(
-          "scrappify.database.url" -> container.jdbcUrl,
-          "scrappify.database.user" -> container.username,
-          "scrappify.database.name" -> container.databaseName,
-          "scrappify.database.password" -> container.password,
-        )))
-          .withFallback(ConfigFactory.load())
-          .resolve()
-      }
+  def createContext(container: Containers): Unit = {
+    context = new AppContext {
+      implicit lazy val system: ActorSystem = ActorSystem("scrappify")
+      implicit lazy val executionContext: ExecutionContext = system.dispatcher
 
-      context.init()
+      override lazy val config = loadConfig(container)
     }
+
+    context.init()
   }
 
-  override def beforeContainersStop(container: Containers): Unit = {
-    //context.databaseModule.sqlDatabase.close()
-  }
+  def loadConfig(container: Containers): Config =
+    ConfigFactory.parseMap(asJava(Map(
+      "scrappify.database.url" -> container.jdbcUrl,
+      "scrappify.database.user" -> container.username,
+      "scrappify.database.name" -> container.databaseName,
+      "scrappify.database.password" -> container.password,
+    )))
+      .withFallback(ConfigFactory.load())
+      .resolve()
+
+  override def beforeContainersStop(container: Containers): Unit =
+    context.databaseModule.database.close()
 
   override def afterEach(): Unit = {
-    val databaseName =  context.configurationModule.databaseConfiguration.name
+    val databaseName = context.configurationModule.databaseConfiguration.name
 
-    val truncatesFuture = context.databaseModule.sqlDatabase.run(
+    val truncatesFuture = context.databaseModule.database.run(
       sql"SELECT table_name FROM information_schema.tables WHERE table_schema = '#$databaseName';".as[String]
     ).map {
       names => names.map(name => SQLActionBuilder(List(s"TRUNCATE TABLE $name CASCADE"), SetUnit).asUpdate)
@@ -69,7 +71,7 @@ trait IntegrationTest
 
     Await.result(truncatesFuture.flatMap {
       truncates =>
-        context.databaseModule.sqlDatabase.run(DBIO.sequence(truncates))
+        context.databaseModule.database.run(DBIO.sequence(truncates))
     }, 5.seconds)
   }
 
