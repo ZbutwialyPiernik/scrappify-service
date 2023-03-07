@@ -1,45 +1,53 @@
 package com.zbutwialypiernik.scrappify.scheduler
 
+import cats.data.EitherT
 import com.github.kagkarlsson.scheduler.Scheduler
 import com.github.kagkarlsson.scheduler.task.SchedulableInstance
-import com.github.kagkarlsson.scheduler.task.helper.{PlainScheduleAndData, RecurringTaskWithPersistentSchedule}
+import com.github.kagkarlsson.scheduler.task.helper.{OneTimeTask, PlainScheduleAndData, RecurringTaskWithPersistentSchedule}
 import com.github.kagkarlsson.scheduler.task.schedule.{Schedule, Schedules}
 import com.typesafe.scalalogging.StrictLogging
-import com.zbutwialypiernik.scrappify.product.SiteProduct
+import com.zbutwialypiernik.scrappify.common.AsyncResult.AsyncResult
+import cron4s.CronExpr
+import io.lemonlabs.uri.AbsoluteUrl
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
-private class DbSiteProductScheduler(val scheduler: Scheduler, val cronTask: RecurringTaskWithPersistentSchedule[ScheduleAndString])
+private class DbSiteProductScheduler(val scheduler: Scheduler,
+                                     val cronTask: RecurringTaskWithPersistentSchedule[ScheduleAndString],
+                                     val oneTimeTask: OneTimeTask[String])
                                     (implicit executionContext: ExecutionContext) extends SiteProductScheduler with StrictLogging {
 
-  override def cronSchedule(siteProduct: SiteProduct): Future[Unit] = Future {
-    scheduler.schedule(schedulableInstance(siteProduct))
-    logger.info(s"Scheduled new product ${siteProduct.name} (${siteProduct.id}) with cron ${siteProduct.fetchCron}")
+  override def cronSchedule(productId: Int, cron: CronExpr, url: AbsoluteUrl): AsyncResult[Unit] = EitherT.rightT {
+    scheduler.schedule(schedulableCronInstance(productId, cron, url))
+    logger.info(s"Scheduled new cron scrapper for product ($productId) with cron $cron and $url")
   }
 
-  override def instantSchedule(siteProduct: SiteProduct): Future[Unit] = Future {
-    scheduler.schedule(cronTask.schedulableInstance(siteProduct.id.toString))
+  override def updateCronSchedule(productId: Int, cron: CronExpr, url: AbsoluteUrl): AsyncResult[Unit] = EitherT.rightT {
+    scheduler.reschedule(schedulableCronInstance(productId, cron, url))
 
-    logger.info(s"Scheduled new product ${siteProduct.name} (${siteProduct.id}) with cron ${siteProduct.fetchCron}")
+    logger.info(s"Updated cron schedule scrapper for product $productId with cron $cron and $url")
   }
 
-  override def updateCronSchedule(siteProduct: SiteProduct): Future[Unit] = Future {
-    scheduler.reschedule(schedulableInstance(siteProduct))
-   // scheduler.schedule(task.schedulableInstance())
+  override def cancelCronSchedule(productId: Int): AsyncResult[Unit] = EitherT.rightT  {
+    scheduler.cancel(cronTask.instanceId(productId.toString))
+
+    logger.info(s"Canceling cron scrapper for product $productId")
   }
 
-  override def cancelCronSchedule(siteProduct: SiteProduct): Future[Unit] = Future {
-    scheduler.cancel(cronTask.instanceId(siteProduct.id.toString))
+  override def instantSchedule(productId: Int, url: AbsoluteUrl): AsyncResult[Unit] = EitherT.rightT  {
+    scheduler.schedule(oneTimeTask.schedulableInstance(productId.toString, url.toString))
+
+    logger.info(s"Scheduled new instant scrapper execution for product ${productId} at url $url")
   }
 
-  private def schedulableInstance(siteProduct: SiteProduct): SchedulableInstance[ScheduleAndString] = {
-    val data = new ScheduleAndString(Schedules.cron(siteProduct.fetchCron.toString), siteProduct.url.toString)
-    cronTask.schedulableInstance(siteProduct.id.toString, data)
+  private def schedulableCronInstance(productId: Int, cron: CronExpr, url: AbsoluteUrl): SchedulableInstance[ScheduleAndString] = {
+    val data = new ScheduleAndString(Schedules.cron(cron.toString), url.toString)
+    cronTask.schedulableInstance(productId.toString, data)
   }
 
 }
 
 class ScheduleAndString(schedule: Schedule, data: String) extends PlainScheduleAndData(schedule, data) {
-  def url: String = super.getData.asInstanceOf[String]
+  def url: AbsoluteUrl = AbsoluteUrl.parse(super.getData.asInstanceOf[String])
 
 }

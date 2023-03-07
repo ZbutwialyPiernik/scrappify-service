@@ -5,7 +5,11 @@
         </encoder>
     </appender>
 
-    <root level="DEBUG">
+    <logger name="slick.basic" level="DEBUG"/>
+    <logger name="com.zbutwialypiernik" level="DEBUG"/>
+    <logger name="com.github.kagkarlsson" level="DEBUG"/>
+
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

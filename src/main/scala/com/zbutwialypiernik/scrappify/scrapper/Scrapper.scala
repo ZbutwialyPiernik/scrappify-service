@@ -11,7 +11,7 @@ case class ScrappingResult(price: BigDecimal,
                            name: Option[String],
                            fetchTime: Instant)
 
-private trait Scrapper {
+trait Scrapper {
 
   def execute(url: AbsoluteUrl): AsyncResult[ScrappingResult]
 

@@ -1,7 +1,7 @@
 package com.zbutwialypiernik.scrappify.site
 
 import com.typesafe.scalalogging.StrictLogging
-import com.zbutwialypiernik.scrappify.api.v1.dto.SiteRequest
+import com.zbutwialypiernik.scrappify.api.v1.product.SiteRequest
 import com.zbutwialypiernik.scrappify.common.Page
 import io.lemonlabs.uri.Host
 

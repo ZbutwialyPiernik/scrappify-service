@@ -1,7 +1,8 @@
-package com.zbutwialypiernik.scrappify.api.v1.dto
+package com.zbutwialypiernik.scrappify.api.v1.common
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
+import com.zbutwialypiernik.scrappify.api.v1.product.ProductRequest
 import com.zbutwialypiernik.scrappify.product.SiteProduct
 import com.zbutwialypiernik.scrappify.site.Site
 import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot

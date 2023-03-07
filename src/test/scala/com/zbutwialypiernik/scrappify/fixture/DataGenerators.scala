@@ -9,11 +9,11 @@ import io.lemonlabs.uri.{AbsoluteUrl, Url}
 import java.util.Currency
 import java.util.concurrent.TimeUnit
 
-trait FakeDataGenerators {
+trait DataGenerators {
 
   val faker = new Faker()
 
-  def fakeProduct(siteHost: String = faker.company().name(), siteId: Int = 0): SiteProduct = {
+  def sampleProduct(siteHost: String = faker.company().name(), siteId: Int = 0): SiteProduct = {
     val code = randomProductCode()
     val url = Url(scheme = "https", host = s"$siteHost.com/" + code).toAbsoluteUrl
     SiteProduct(randomNonNegativeInt(), faker.commerce().productName(), url, randomProductCode(), validCron(), siteId)
@@ -21,7 +21,7 @@ trait FakeDataGenerators {
 
   def randomProductCode(): String = faker.code().asin()
 
-  def fakeScrappingResult(): ScrappingResult =
+  def sampleScrappingResult(): ScrappingResult =
     ScrappingResult(
       randomBigDecimal(),
       Some(Currency.getInstance(faker.currency().code())),

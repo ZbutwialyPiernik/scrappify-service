@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
-import com.zbutwialypiernik.scrappify.api.v1.dto.{ErrorResponse, JsonSupport}
+import com.zbutwialypiernik.scrappify.api.v1.common.{ErrorResponse, JsonSupport}
 import com.zbutwialypiernik.scrappify.common.Page
 import octopus.Validator
 import octopus.syntax._

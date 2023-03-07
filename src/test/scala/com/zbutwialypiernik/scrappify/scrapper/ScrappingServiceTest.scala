@@ -1,14 +1,14 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
 import com.zbutwialypiernik.scrappify.common.AsyncResult
-import com.zbutwialypiernik.scrappify.fixture.{CommonParams, FakeDataGenerators}
+import com.zbutwialypiernik.scrappify.fixture.{CommonParams, DataGenerators}
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.matchers.should._
 import org.scalatest.wordspec.AsyncWordSpec
 
 class ScrappingServiceTest extends AsyncWordSpec
   with Matchers
-  with FakeDataGenerators
+  with DataGenerators
   with AsyncMockFactory
   with CommonParams {
 
@@ -19,7 +19,7 @@ class ScrappingServiceTest extends AsyncWordSpec
     "url has supported scrapper" should {
       "execute scrapper and return results" in {
         val url = randomUrl()
-        val scrappingResult = fakeScrappingResult()
+        val scrappingResult = sampleScrappingResult()
 
         (scrapper.supports _).expects(url).returning(true)
         (scrapper.execute _).expects(url).returning(AsyncResult.success(scrappingResult))

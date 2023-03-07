@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import com.zbutwialypiernik.scrappify.api.v1.dto.{JsonSupport, ValidationErrorResponse}
+import com.zbutwialypiernik.scrappify.api.v1.common.{JsonSupport, ValidationErrorResponse}
 import octopus.ValidationError
 
 import scala.util.control.NonFatal

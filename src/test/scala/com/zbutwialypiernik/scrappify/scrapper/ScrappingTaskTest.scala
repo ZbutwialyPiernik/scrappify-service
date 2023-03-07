@@ -1,7 +1,7 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
 import com.zbutwialypiernik.scrappify.common.{AsyncResult, InternalServiceError}
-import com.zbutwialypiernik.scrappify.fixture.FakeDataGenerators
+import com.zbutwialypiernik.scrappify.fixture.DataGenerators
 import com.zbutwialypiernik.scrappify.snapshot.{SiteProductSnapshot, SiteProductSnapshotService}
 import io.lemonlabs.uri.AbsoluteUrl
 import org.scalamock.scalatest.AsyncMockFactory
@@ -13,7 +13,7 @@ import scala.concurrent.Future
 class ScrappingTaskTest extends AsyncWordSpec
   with Matchers
   with AsyncMockFactory
-  with FakeDataGenerators {
+  with DataGenerators {
 
   val productSnapshotService = mock[SiteProductSnapshotService]
   val scrappingService = mock[ScrappingService]
@@ -25,7 +25,7 @@ class ScrappingTaskTest extends AsyncWordSpec
         val productId = randomNonNegativeInt()
         val productUrl = randomUrl()
 
-        val scrappingResult = fakeScrappingResult()
+        val scrappingResult = sampleScrappingResult()
         val snapshot = SiteProductSnapshot(randomNonNegativeInt(), scrappingResult.price, scrappingResult.currency, scrappingResult.name, scrappingResult.fetchTime, productId)
 
         (scrappingService.performScrapping _).expects(productUrl).returning(AsyncResult.success(scrappingResult))

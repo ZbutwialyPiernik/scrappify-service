@@ -1,17 +1,17 @@
 package com.zbutwialypiernik.scrappify.scheduler
 
-import com.zbutwialypiernik.scrappify.product.SiteProduct
-
-import scala.concurrent.Future
+import com.zbutwialypiernik.scrappify.common.AsyncResult.AsyncResult
+import cron4s.CronExpr
+import io.lemonlabs.uri.AbsoluteUrl
 
 trait SiteProductScheduler {
 
-  def cronSchedule(SiteProduct: SiteProduct): Future[Unit]
+  def cronSchedule(productId: Int, cron: CronExpr, url: AbsoluteUrl): AsyncResult[Unit]
 
-  def updateCronSchedule(SiteProduct: SiteProduct): Future[Unit]
+  def updateCronSchedule(productId: Int, cron: CronExpr, url: AbsoluteUrl): AsyncResult[Unit]
   
-  def cancelCronSchedule(SiteProduct: SiteProduct): Future[Unit]
+  def cancelCronSchedule(productId: Int): AsyncResult[Unit]
   
-  def instantSchedule(SiteProduct: SiteProduct): Future[Unit]
+  def instantSchedule(productId: Int, url: AbsoluteUrl): AsyncResult[Unit]
 
 }

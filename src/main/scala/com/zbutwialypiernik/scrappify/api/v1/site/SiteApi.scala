@@ -1,4 +1,4 @@
-package com.zbutwialypiernik.scrappify.api.v1
+package com.zbutwialypiernik.scrappify.api.v1.site
 
 import akka.http.scaladsl.server.Directives.{_symbol2NR, complete, concat, get, parameters, path, rejectEmptyResponse}
 import akka.http.scaladsl.server.PathMatchers.IntNumber

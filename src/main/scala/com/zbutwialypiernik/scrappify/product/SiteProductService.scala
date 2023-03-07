@@ -1,10 +1,10 @@
 package com.zbutwialypiernik.scrappify.product
 
-import cats.data.EitherT
+import cats.data.{EitherT, OptionT}
 import com.typesafe.scalalogging.StrictLogging
-import com.zbutwialypiernik.scrappify.api.v1.dto.ProductRequest
+import com.zbutwialypiernik.scrappify.api.v1.product.ProductRequest
 import com.zbutwialypiernik.scrappify.common.AsyncResult.AsyncResult
-import com.zbutwialypiernik.scrappify.common.{Page, ServiceError}
+import com.zbutwialypiernik.scrappify.common.{NotFoundError, Page, ServiceError}
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
 import com.zbutwialypiernik.scrappify.scheduler.SiteProductScheduler
 import com.zbutwialypiernik.scrappify.site.SiteService
@@ -34,7 +34,7 @@ class ProductService(productRepository: SiteProductRepository, siteService: Site
       .flatMapF(site => {
         val action = for {
           product <- productRepository.createAndFetch(SiteProduct(0, request.name, request.url, request.productCode, request.fetchCron, site.id))
-          _ <- DBIO.from(siteProductScheduler.cronSchedule(product))
+          _ <- DBIO.from(siteProductScheduler.cronSchedule(product.id, product.fetchCron, product.url).value)
         } yield product
 
         productRepository.run(action.transactionally)
@@ -44,6 +44,11 @@ class ProductService(productRepository: SiteProductRepository, siteService: Site
           }
           .map(Right(_))
       })
+  }
+
+  def requestProductPriceRefresh(productId: Int): AsyncResult[Unit] = {
+    EitherT.fromOptionF(findProductById(productId), NotFoundError(s"Product with ${productId} does not exists"))
+      .flatMap(product => siteProductScheduler.instantSchedule(product.id, product.url))
   }
 
 }

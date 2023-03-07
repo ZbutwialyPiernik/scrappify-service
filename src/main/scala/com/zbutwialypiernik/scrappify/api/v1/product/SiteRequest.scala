@@ -1,4 +1,4 @@
-package com.zbutwialypiernik.scrappify.api.v1.dto
+package com.zbutwialypiernik.scrappify.api.v1.product
 
 import io.lemonlabs.uri.Host
 import octopus.dsl._

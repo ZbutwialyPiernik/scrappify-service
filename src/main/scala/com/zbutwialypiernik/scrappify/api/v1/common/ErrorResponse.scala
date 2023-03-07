@@ -1,4 +1,4 @@
-package com.zbutwialypiernik.scrappify.api.v1.dto
+package com.zbutwialypiernik.scrappify.api.v1.common
 
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 

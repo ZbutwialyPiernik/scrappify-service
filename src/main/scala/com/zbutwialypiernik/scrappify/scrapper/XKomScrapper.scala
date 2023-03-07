@@ -23,6 +23,6 @@ class XKomScrapper(clock: Clock, browser: Browser)(implicit executionContext: Ex
 
   override def findProductName(document: Document): Option[String] = document >?> text("h1")
   
-  override def supportedHosts: Set[String] = Set("x-kom.pl", "localhost")
+  override def supportedHosts: Set[String] = Set("x-kom.pl")
 
 }
