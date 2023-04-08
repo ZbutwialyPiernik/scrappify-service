@@ -33,17 +33,12 @@ abstract class SimpleHtmlScrapper(clock: Clock, browser: Browser)(implicit execu
         findPrice(document)
           .map(price => {
             val result = ScrappingResult(price, findCurrency(document), findProductName(document), clock.instant())
-
             logger.debug(s"Fetched results from: $productUrl", result)
-
             result
           })
           .toRight({
             val error = PriceNotExtractedError(url, document.toHtml)
-
-            logger.info(error.message)
-            logger.debug(s"Could not find price in $productUrl \n${error.siteBody}")
-
+            logger.error(s"${error.message}\n${error.siteBody}")
             error
           })
       }))

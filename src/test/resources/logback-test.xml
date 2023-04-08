@@ -8,6 +8,7 @@
     <logger name="slick.basic" level="DEBUG"/>
     <logger name="com.zbutwialypiernik" level="DEBUG"/>
     <logger name="com.github.kagkarlsson" level="DEBUG"/>
+    <logger name="scala.slick.jdbc.JdbcBackend.statement" level="DEBUG" />
 
     <root level="INFO">
         <appender-ref ref="STDOUT" />

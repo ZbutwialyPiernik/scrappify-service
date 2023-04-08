@@ -1,0 +1,1 @@
+INSERT INTO site (id, name, host) VALUES (0, 'x-kom', 'www.x-kom.pl');

@@ -1,49 +1,52 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
+import com.zbutwialypiernik.scrappify.BaseUnitTest
 import com.zbutwialypiernik.scrappify.common.AsyncResult
-import com.zbutwialypiernik.scrappify.fixture.{CommonParams, DataGenerators}
-import org.scalamock.scalatest.AsyncMockFactory
-import org.scalatest.matchers.should._
-import org.scalatest.wordspec.AsyncWordSpec
 
-class ScrappingServiceTest extends AsyncWordSpec
-  with Matchers
-  with DataGenerators
-  with AsyncMockFactory
-  with CommonParams {
+class ScrappingServiceTest extends BaseUnitTest {
 
   val scrapper = mock[Scrapper]
-  val scrappingService = new ScrappingService(Set(scrapper))
+  val scrapper2 = mock[Scrapper]
+  val scrappingService = new ScrappingService(Set(scrapper, scrapper2))
 
   "performScrapping" when {
     "url has supported scrapper" should {
       "execute scrapper and return results" in {
-        val url = randomUrl()
-        val scrappingResult = sampleScrappingResult()
-
-        (scrapper.supports _).expects(url).returning(true)
-        (scrapper.execute _).expects(url).returning(AsyncResult.success(scrappingResult))
-
-        scrappingService.performScrapping(url).value map { result =>
-          result.isRight shouldEqual true
-          result match {
-            case Right(v) => v shouldEqual scrappingResult
+        Given("Url to scrap")
+          val url = sampleUrl()
+        And("Non-matching scrapper")
+          (scrapper.supports _).expects(url).returning(false)
+        And("Matching scrapper that will return valid scrapping result")
+          val scrappingResult = sampleScrappingResult()
+          (scrapper2.supports _).expects(url).returning(true)
+          (scrapper2.execute _).expects(url).returning(AsyncResult.success(scrappingResult))
+        When("Call scrapper")
+          val result = scrappingService.performScrapping(url).value
+        Then("Should return Right with scrapping result")
+          result map { result =>
+            result.isRight shouldEqual true
+            result match {
+              case Right(v) => v shouldEqual scrappingResult
+            }
           }
-        }
       }
     }
 
     "url does not have supported scrapper" should {
-      "not execute scrapper and return failure" in {
-        val url = randomUrl()
-
+      "not execute scrapper and return error" in {
+        Given("Url to scrap")
+        val url = sampleUrl()
+        And("Non matching scrappers")
         (scrapper.supports _).expects(url).returning(false)
-
-        scrappingService.performScrapping(url).value map { result =>
+        (scrapper2.supports _).expects(url).returning(false)
+        When("Call scrapper")
+        val result = scrappingService.performScrapping(url).value
+        Then("Returns Left with UnsupportedSiteError")
+        result map { result =>
           result.isLeft shouldEqual true
           result match {
             case Left(exception) =>
-              exception shouldBe a [UnsupportedSiteException]
+              exception shouldBe a [UnsupportedSiteError]
               exception should have(
                 Symbol("url")(url.toString())
               )

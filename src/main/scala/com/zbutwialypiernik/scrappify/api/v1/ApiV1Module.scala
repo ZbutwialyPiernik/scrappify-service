@@ -5,7 +5,7 @@ import akka.event.Logging
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.server.Directives.{handleExceptions, handleRejections}
 import akka.http.scaladsl.server.directives.DebuggingDirectives
-import akka.http.scaladsl.server.{Directives, Route}
+import akka.http.scaladsl.server.{Directives, ExceptionHandler, RejectionHandler, Route}
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
 import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.zbutwialypiernik.scrappify.api.ErrorHandlers
@@ -28,14 +28,14 @@ class ApiV1Module(productService: ProductService,
   lazy val routes: Route =
     cors(CorsSettings.defaultSettings.withAllowedMethods(
       Seq(GET, POST, PUT, DELETE, OPTIONS))) {
-      //DebuggingDirectives.logRequest("req/resp", Logging.InfoLevel) {
-        //DebuggingDirectives.logRequestResult("req/resp", Logging.InfoLevel) {
+      DebuggingDirectives.logRequest("req/resp", Logging.InfoLevel) {
+        DebuggingDirectives.logRequestResult("req/resp", Logging.InfoLevel) {
           handleExceptions(exceptionHandler) {
-            handleRejections(rejectionHandler) {
+            handleRejections(rejectionHandler.withFallback(RejectionHandler.default)) {
               Directives.concat(wire[ProductApi].routes, wire[SiteApi].routes)
             }
-        //  }
-        //}
+          }
+        }
       }
 
     }

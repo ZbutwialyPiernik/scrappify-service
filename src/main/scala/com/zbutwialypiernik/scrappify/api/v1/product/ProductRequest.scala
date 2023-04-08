@@ -4,7 +4,7 @@ import cron4s.expr.CronExpr
 import io.lemonlabs.uri.AbsoluteUrl
 import octopus.dsl._
 
-case class ProductRequest(name: String, url: AbsoluteUrl, productCode: String, fetchCron: CronExpr)
+case class ProductRequest(name: String, url: AbsoluteUrl, code: String, fetchCron: CronExpr)
 
 object ProductRequest {
 

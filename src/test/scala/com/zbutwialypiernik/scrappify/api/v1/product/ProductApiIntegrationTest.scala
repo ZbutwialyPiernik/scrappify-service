@@ -1,54 +1,44 @@
 package com.zbutwialypiernik.scrappify.api.v1.product
 
 import akka.http.scaladsl.model.StatusCodes
+import com.zbutwialypiernik.scrappify.IntegrationTest
 import com.zbutwialypiernik.scrappify.api.v1.common.ValidationErrorResponse
-import com.zbutwialypiernik.scrappify.api.v1.fixture.product.{ProductApiExecutor, ProductApiMatchers}
-import com.zbutwialypiernik.scrappify.api.v1.fixture.{IntegrationTest, WebsiteMocker}
-import com.zbutwialypiernik.scrappify.fixture.{CommonParams, DataGenerators}
-import com.zbutwialypiernik.scrappify.product.SiteProduct
+import com.zbutwialypiernik.scrappify.api.v1.fixture.product.{ProductApiClient, ProductApiMatchers}
+import com.zbutwialypiernik.scrappify.api.v1.fixture.WebsiteMocker
+import com.zbutwialypiernik.scrappify.fixture.CommonDataGenerators
+import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot
 import io.lemonlabs.uri.{AbsoluteUrl, Host}
 import org.awaitility.Awaitility.await
 import org.awaitility.scala.AwaitilitySupport
 
-import scala.concurrent.duration.SECONDS
+import java.util.Currency
+import scala.concurrent.duration.MILLISECONDS
 
 class ProductApiIntegrationTest extends IntegrationTest
-  with CommonParams
   with WebsiteMocker
-  with DataGenerators
+  with CommonDataGenerators
   with AwaitilitySupport
   with ProductApiMatchers
-  with ProductApiExecutor {
+  with ProductApiClient {
 
   lazy val siteService = context.siteModule.siteService
 
-  "POST /api/v1/product" when {
+  "POST /api/v1/products" when {
     "request body is valid" should {
       "create product" in {
-        siteService.createSite(SiteRequest(name = "Notebook site", Host.parse("notebook.com")))
-
-        val request = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("https://notebook.com/product/abcd1234"), "test", validCron())
-
+        And("Valid create site request")
+        val request = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("http://localhost/product/abcd1234"), "test", sampleCron())
+        When("Call create product endpoint")
         val response = createProduct(request)
-
-        Post("/api/v1/product", request) ~> routes ~> check {
-          status shouldEqual StatusCodes.Created
-
-          val response = responseAs[SiteProduct]
-          response.id should be >= 0
-          response.name shouldEqual request.name
-          response.url shouldEqual request.url
-          response.fetchCron shouldEqual request.fetchCron
-          response.productCode shouldEqual request.productCode
-        }
+        Then("Returns valid product response")
+        isValidProductResponse(response, request)
       }
     }
 
     "request body contains unsupported host" should {
       "throw 409 error" in {
-        siteService.createSite(SiteRequest(name = "Notebook site", Host.parse("notebook.com")))
+        val request = ProductRequest("Smartphone XZY", AbsoluteUrl.parse("http://localhost/someproduct"), "test", sampleCron())
 
-        val request = ProductRequest("Smartphone XZY", AbsoluteUrl.parse("https://smartphone.com/someproduct"), "test", validCron())
         val response = createProduct(request)
 
         isErrorResponse(response, StatusCodes.Conflict, s"Host ${request.url.host} is not supported")
@@ -57,11 +47,9 @@ class ProductApiIntegrationTest extends IntegrationTest
 
     "request body is invalid" should {
       "throw 400 error" in {
-        siteService.createSite(SiteRequest(name = "Notebook site", Host.parse("notebook.com")))
+        val request = ProductRequest("", AbsoluteUrl.parse("htts://localhost/someproduct"), "ABCD1234", sampleCron())
 
-        val request = ProductRequest("", AbsoluteUrl.parse("https://notebook.com/someproduct"), "ABCD1234", validCron())
-
-        Post("/api/v1/product", request) ~> routes ~> check {
+        Post("/api/v1/products", request) ~> routes ~> check {
           status shouldEqual StatusCodes.BadRequest
 
           val response = responseAs[ValidationErrorResponse]
@@ -77,39 +65,76 @@ class ProductApiIntegrationTest extends IntegrationTest
     }
   }
 
-  "POST /api/v1/product/{id}/refresh" when {
+  "PUT /api/v1/products/{id}" when {
+    "request body is valid" should {
+      "update product" in {
+        val createRequest = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("https://notebook.com/product/abcd1234"), "test", sampleCron())
+
+        val productId = isValidProductResponse(createProduct(createRequest), createRequest).id
+
+        val updateRequest = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("https://notebook.com/product/abcd1234"), "test", sampleCron())
+
+        isValidProductResponse(updateProduct(productId, updateRequest), updateRequest, StatusCodes.OK)
+      }
+    }
+  }
+
+  "GET /api/v1/products" when {
+    "request body is valid" should {
+      "update product" in {
+        val createRequest = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("https://notebook.com/product/abcd1234"), "test", sampleCron())
+
+        val productId = isValidProductResponse(createProduct(createRequest), createRequest).id
+
+        val updateRequest = ProductRequest("Notebook XYZ", AbsoluteUrl.parse("https://notebook.com/product/abcd1234"), "test", sampleCron())
+
+        isValidProductResponse(updateProduct(productId, updateRequest), updateRequest, StatusCodes.OK)
+      }
+    }
+  }
+
+  "POST /api/v1/products/{id}/refresh" when {
     "product exists" should {
       "schedule new scrapping task and execute" in {
-        siteService.createSite(SiteRequest(name = "Notebook site", Host.parse("localhost")))
+        val mockProductSnapshot = mockProductSite()
 
-        val siteMockUrl = mockProductSite("Notebook 1TB/16GB 16'", "50.10 zł")
-
-        val productRequest = ProductRequest("Note", AbsoluteUrl.parse(siteMockUrl), "ABCD1234", validCron())
+        val productRequest = ProductRequest("Note", AbsoluteUrl.parse(mockProductSnapshot.url), "ABCD1234", sampleCron())
 
         // Should create product from valid request
         val productResponse = createProduct(productRequest)
 
         // Should return product with 201 code
-        val productId = isValidProductCreatedResponse(productResponse, productRequest).id
+        val productId = isValidProductResponse(productResponse, productRequest).id
 
-        //
+        // Request
         val refreshResponse = refreshProduct(productId)
 
         //
         isOkWithEmptyBody(refreshResponse)
 
-        await atMost(5, SECONDS) until {
-          test(productId)
+        // Wait till async scrapper does the job
+        await atMost(100, MILLISECONDS) until {
+          hasValidProductSnapshot(productId, mockProductSnapshot.productName, mockProductSnapshot.price, mockProductSnapshot.currency)
         }
       }
     }
   }
 
-  private def test(productId: Long): Boolean = {
-    val response = listProductPrices (productId)
-    val page = isValidPageOfPrices (response)
+  private def hasValidProductSnapshot(productId: Int, productName: Option[String], productPrice: BigDecimal, currency: Option[Currency]): Boolean = {
+    val response = listProductSnapshots(productId)
+    val page = isValidPage[SiteProductSnapshot](response)
+    println(page)
 
-    page.nonEmpty
+    if (page.size != 1) {
+      return false
+    }
+
+    val a = page.head.productId == productId
+    val b = page.head.name == productName
+    val c = page.head.price == productPrice
+    val d = page.head.currency == currency
+
+    page.size == 1
   }
 
 }

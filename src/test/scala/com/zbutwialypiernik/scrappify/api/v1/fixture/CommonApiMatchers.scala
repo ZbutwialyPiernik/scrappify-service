@@ -30,9 +30,8 @@ trait CommonApiMatchers
 
   def isOkWithEmptyBody(result: RouteTestResult): Unit = {
     check {
-      println(responseAs[String])
       status shouldEqual StatusCodes.OK
-      result.response.entity
+      responseAs[String] shouldEqual "OK"
     }(result)
   }
 

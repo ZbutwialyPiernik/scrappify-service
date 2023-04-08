@@ -10,6 +10,7 @@ val scalaTestVersion = "3.2.15"
 val testcontainersVersion = "0.40.12"
 val slickVersion = "3.4.1"
 val awaitilityVersion = "4.2.0"
+val doobieVersion = "1.0.0-RC1"
 
 lazy val root = (project in file("."))
   .settings(
@@ -29,6 +30,9 @@ lazy val root = (project in file("."))
     "com.typesafe.slick"                %% "slick-hikaricp"                  % slickVersion,
     "com.typesafe.slick"                %% "slick-codegen"                   % slickVersion,
     "com.github.tminglei"               %% "slick-pg"                        % "0.21.1",
+    "org.tpolecat"                      %% "doobie-core"                     % doobieVersion,
+    "org.tpolecat"                      %% "doobie-hikari"                   % doobieVersion,
+    "org.tpolecat"                      %% "doobie-postgres"                 % doobieVersion,
     "net.ruippeixotog"                  %% "scala-scraper"                   % "3.0.0",
     "io.scalaland"                      %% "chimney"                         % "0.6.2",
     "com.github.alonsodomin.cron4s"     %% "cron4s-core"                     % "0.6.1",
@@ -55,6 +59,7 @@ lazy val root = (project in file("."))
     "com.typesafe.akka"                 %% "akka-http-testkit"               % akkaHttpVersion       % Test,
     "com.typesafe.akka"                 %% "akka-stream-testkit"             % akkaVersion           % Test,
     "com.github.javafaker"               % "javafaker"                       % "1.0.2"               % Test,
+    "org.tpolecat"                      %% "doobie-scalatest"                % doobieVersion         % Test
   )
 )
 

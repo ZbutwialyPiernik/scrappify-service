@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import com.zbutwialypiernik.scrappify.api.v1.common.{ErrorResponse, JsonSupport}
-import com.zbutwialypiernik.scrappify.common.Page
+import com.zbutwialypiernik.scrappify.common.PageRequest
 import octopus.Validator
 import octopus.syntax._
 
@@ -18,11 +18,11 @@ trait CustomDirectives {
   private val sizeParameter: NameDefaultReceptacle[Int] = Symbol("size").as[Int].withDefault(20)
 
   def apiPrefix[L](version: Int, pm: PathMatcher[L]): Directive[L] = {
-    pathPrefix("api" / s"v${version}" / pm)
+    pathPrefix("api" / s"v$version" / pm)
   }
 
-  def withPageParams: Directive1[Page] = {
-    parameters(pageParameter, sizeParameter).as(Page.apply _)
+  def withPageParams: Directive1[PageRequest] = {
+    parameters(pageParameter, sizeParameter).as(PageRequest.apply _)
   }
 
   def validatedEntity[T](um: FromRequestUnmarshaller[T])(implicit validator: Validator[T]): Directive1[T] =

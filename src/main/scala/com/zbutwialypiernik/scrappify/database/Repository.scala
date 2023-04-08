@@ -99,14 +99,14 @@ object Repository extends CustomType {
 
     def url = column[AbsoluteUrl]("url", O.Unique)
 
-    def productCode = column[String]("product_code")
+    def code = column[String]("code")
 
     def fetchCron = column[CronExpr]("fetch_cron")
 
     def siteId = column[Int]("site_id")
 
     def * =
-      (id, name, url, productCode, fetchCron, siteId) <>
+      (id, name, url, code, fetchCron, siteId) <>
         (SiteProduct.tupled, SiteProduct.unapply)
 
     def site = foreignKey("site", siteId, sites)(_.id, ForeignKeyAction.Restrict, ForeignKeyAction.Restrict)

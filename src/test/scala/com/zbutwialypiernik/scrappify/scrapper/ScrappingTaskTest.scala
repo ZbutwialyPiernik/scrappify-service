@@ -1,7 +1,8 @@
 package com.zbutwialypiernik.scrappify.scrapper
 
+import com.zbutwialypiernik.scrappify.BaseUnitTest
 import com.zbutwialypiernik.scrappify.common.{AsyncResult, InternalServiceError}
-import com.zbutwialypiernik.scrappify.fixture.DataGenerators
+import com.zbutwialypiernik.scrappify.fixture.CommonDataGenerators
 import com.zbutwialypiernik.scrappify.snapshot.{SiteProductSnapshot, SiteProductSnapshotService}
 import io.lemonlabs.uri.AbsoluteUrl
 import org.scalamock.scalatest.AsyncMockFactory
@@ -10,10 +11,7 @@ import org.scalatest.wordspec.AsyncWordSpec
 
 import scala.concurrent.Future
 
-class ScrappingTaskTest extends AsyncWordSpec
-  with Matchers
-  with AsyncMockFactory
-  with DataGenerators {
+class ScrappingTaskTest extends BaseUnitTest {
 
   val productSnapshotService = mock[SiteProductSnapshotService]
   val scrappingService = mock[ScrappingService]
@@ -22,11 +20,11 @@ class ScrappingTaskTest extends AsyncWordSpec
   "execute" when {
     "url is supported and scrapping service returns valid result" should {
       "register new snapshot" in {
-        val productId = randomNonNegativeInt()
-        val productUrl = randomUrl()
+        val productId = sampleNonNegativeInt()
+        val productUrl = sampleUrl()
 
         val scrappingResult = sampleScrappingResult()
-        val snapshot = SiteProductSnapshot(randomNonNegativeInt(), scrappingResult.price, scrappingResult.currency, scrappingResult.name, scrappingResult.fetchTime, productId)
+        val snapshot = SiteProductSnapshot(sampleNonNegativeInt(), scrappingResult.price, scrappingResult.currency, scrappingResult.name, scrappingResult.fetchTime, productId)
 
         (scrappingService.performScrapping _).expects(productUrl).returning(AsyncResult.success(scrappingResult))
         (productSnapshotService.registerSnapshot _).expects(productId, scrappingResult).returning(Future.successful(snapshot))
@@ -42,8 +40,8 @@ class ScrappingTaskTest extends AsyncWordSpec
 
     "product exists and scrapping service returns error" should {
       "pass down error" in {
-        val productId = randomNonNegativeInt()
-        val productUrl = randomUrl()
+        val productId = sampleNonNegativeInt()
+        val productUrl = sampleUrl()
 
         (scrappingService.performScrapping _).expects(productUrl).returning(AsyncResult.failure(InternalServiceError("some error")))
 

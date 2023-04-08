@@ -3,6 +3,7 @@ package com.zbutwialypiernik.scrappify.api.v1.common
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
 import com.zbutwialypiernik.scrappify.api.v1.product.ProductRequest
+import com.zbutwialypiernik.scrappify.common.Page
 import com.zbutwialypiernik.scrappify.product.SiteProduct
 import com.zbutwialypiernik.scrappify.site.Site
 import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot
@@ -88,5 +89,6 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val siteResponseFormat = jsonFormat3(Site.apply)
   implicit val errorResponseFormat = jsonFormat2(ErrorResponse.apply)
   implicit val validationErrorResponseFormat = jsonFormat3(ValidationErrorResponse.apply)
+  implicit def pageFormat[T: JsonFormat]: RootJsonFormat[Page[T]] = jsonFormat4(Page.apply[T])
 
 }

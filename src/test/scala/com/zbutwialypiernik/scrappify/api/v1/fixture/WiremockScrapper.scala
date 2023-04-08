@@ -19,4 +19,5 @@ class WiremockScrapper(clock: Clock, browser: Browser)(implicit executionContext
   override def findProductName(document: Document): Option[String] = document >?> text("h1")
 
   override def supportedHosts: Set[String] = Set("localhost")
+
 }

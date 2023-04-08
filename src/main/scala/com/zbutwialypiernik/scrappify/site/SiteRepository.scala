@@ -1,5 +1,5 @@
 package com.zbutwialypiernik.scrappify.site
-import com.zbutwialypiernik.scrappify.common.Page
+import com.zbutwialypiernik.scrappify.common.PageRequest
 import com.zbutwialypiernik.scrappify.database.Repository.{Sites, sites}
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
 import com.zbutwialypiernik.scrappify.database.Repository
@@ -13,7 +13,7 @@ class SiteRepository(database: Database) extends Repository[Sites, Site, Int](da
   def findByHost(host: Host): Future[Option[Site]] =
     database.run(sites.filter(_.host === host).result.headOption)
 
-  def listSites(name: Option[String], page: Page): Future[Seq[Site]] =
+  def listSites(name: Option[String], page: PageRequest): Future[Seq[Site]] =
     database.run(sites
       .drop(page.offset)
       .take(page.size)
