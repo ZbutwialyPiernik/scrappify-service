@@ -4,10 +4,10 @@ import akka.http.scaladsl.server.Directives.{_symbol2NR, complete, concat, get, 
 import akka.http.scaladsl.server.PathMatchers.IntNumber
 import akka.http.scaladsl.server.Route
 import com.zbutwialypiernik.scrappify.api.Api
-import com.zbutwialypiernik.scrappify.product.ProductService
+import com.zbutwialypiernik.scrappify.product.SiteProductService
 import com.zbutwialypiernik.scrappify.site.SiteService
 
-class SiteApi(productService: ProductService,
+class SiteApi(productService: SiteProductService,
               siteService: SiteService)
   extends Api {
 

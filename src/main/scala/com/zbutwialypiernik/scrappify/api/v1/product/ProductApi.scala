@@ -5,12 +5,14 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.zbutwialypiernik.scrappify.api.Api
 import com.zbutwialypiernik.scrappify.common.NotFoundError
-import com.zbutwialypiernik.scrappify.product.{ProductService, UnsupportedSiteError}
+import com.zbutwialypiernik.scrappify.product.{SiteProductService, UnsupportedSiteError}
 import com.zbutwialypiernik.scrappify.scheduler.SiteProductScheduler
+import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshotService
 
 import scala.concurrent.ExecutionContext
 
-class ProductApi(val productService: ProductService,
+class ProductApi(val productService: SiteProductService,
+                 val snapshotService: SiteProductSnapshotService,
                  val siteProductScheduler: SiteProductScheduler)
                 (implicit executionContext: ExecutionContext) extends Api {
 
@@ -30,7 +32,7 @@ class ProductApi(val productService: ProductService,
           path("snapshots") {
             withPageParams { page =>
               get {
-                complete(productService.listPrices(id, page))
+                complete(snapshotService.list(id, page))
               }
             }
           },

@@ -1,5 +1,6 @@
 package com.zbutwialypiernik.scrappify.database
 
+import com.zbutwialypiernik.scrappify.common.{Page, PageRequest}
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
 import com.zbutwialypiernik.scrappify.product.SiteProduct
 import com.zbutwialypiernik.scrappify.site.Site
@@ -8,13 +9,15 @@ import cron4s.Cron
 import cron4s.expr.CronExpr
 import io.lemonlabs.uri.{AbsoluteUrl, Host}
 import slick.ast.BaseTypedType
-import slick.dbio.DBIO
+import slick.dbio.{DBIO, DBIOAction, NoStream}
 import slick.jdbc.JdbcType
+import slick.lifted.Query
 
 import java.time.Instant
 import java.util.Currency
+import scala.concurrent.{ExecutionContext, Future}
 
-trait Entity[PK, E <: Entity[PK, E]] {
+trait Identifiable[PK, E <: Identifiable[PK, E]] {
 
   def id: PK
 
@@ -22,11 +25,11 @@ trait Entity[PK, E <: Entity[PK, E]] {
 
 }
 
-trait IdentifyableTable[PK] {
+trait IdentifiableTable[PK] {
   def id: slick.lifted.Rep[PK]
 }
 
-abstract class Repository[T <: Table[E] with IdentifyableTable[PK], E <: Entity[PK, E], PK: BaseTypedType](val database: Database) extends CustomType {
+abstract class Repository[T <: Table[E] with IdentifiableTable[PK], E <: Identifiable[PK, E], PK: BaseTypedType](private val database: Database) extends CustomType {
 
   def table: TableQuery[T]
 
@@ -38,6 +41,24 @@ abstract class Repository[T <: Table[E] with IdentifyableTable[PK], E <: Entity[
     val insertQuery = table returning table.map(_.id) into ((row, id) => row.copyWithId(id))
     insertQuery += entity
   }
+
+  protected def paginate[B](pageRequest: PageRequest, query: Query[_, B, Seq])(implicit executionContext: ExecutionContext): DBIO[Page[B]] = {
+    for {
+      items <- query
+        .drop(pageRequest.offset)
+        .take(pageRequest.size)
+        .result
+      total <- query
+        .size
+        .result
+    } yield pageRequest.toPage(
+      items,
+      total
+    )
+  }
+
+  def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = database.run(a)
+
 
 }
 
@@ -76,7 +97,7 @@ object Repository extends CustomType {
   val siteProductPrices = TableQuery[SiteProductSnapshots]
 
   class Sites(tag: Tag) extends Table[Site](tag, "site")
-    with IdentifyableTable[Int]  {
+    with IdentifiableTable[Int]  {
 
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
 
@@ -91,7 +112,7 @@ object Repository extends CustomType {
   }
 
   class SiteProducts(tag: Tag) extends Table[SiteProduct](tag, "product")
-      with IdentifyableTable[Int] {
+      with IdentifiableTable[Int] {
 
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
 
@@ -113,8 +134,8 @@ object Repository extends CustomType {
 
   }
 
-  class SiteProductSnapshots(tag: Tag) extends Table[SiteProductSnapshot](tag, "product_price")
-    with IdentifyableTable[Int] {
+  class SiteProductSnapshots(tag: Tag) extends Table[SiteProductSnapshot](tag, "product_snapshot")
+    with IdentifiableTable[Int] {
 
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
 

@@ -8,7 +8,11 @@ import com.zbutwialypiernik.scrappify.database.DatabaseModule
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterEach, GivenWhenThen}
 import org.scalatest.wordspec.AnyWordSpec
+import slick.dbio.Effect.All
+import slick.dbio.{DBIO, DBIOAction, Effect, NoStream}
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 import scala.jdk.javaapi.CollectionConverters.asJava
 
 trait DatabaseIntegrationTest
@@ -28,7 +32,7 @@ trait DatabaseIntegrationTest
     afterDatabaseStart(container)
   }
 
-  def afterDatabaseStart(container: Containers): Unit = {}
+  def afterDatabaseStart(container: Containers): Unit = databaseModule.init()
 
   def loadConfig(container: Containers): Config =
     ConfigFactory.parseMap(asJava(Map(
@@ -43,7 +47,10 @@ trait DatabaseIntegrationTest
   override def beforeContainersStop(container: Containers): Unit =
     databaseModule.database.close()
 
-  //def runBlocking[R](a: DBIOAction[R, NoStream, Nothing]): [R] = Awa
+  def runBlocking[R](a: DBIO[R]): R = Await.result(databaseModule.database.run(a), 1 seconds)
+
+  def runBlocking(a: DBIO[Any]*): Unit = Await.result(databaseModule.database.run(DBIO.sequence(a)), 1 seconds)
+
 
 }
 

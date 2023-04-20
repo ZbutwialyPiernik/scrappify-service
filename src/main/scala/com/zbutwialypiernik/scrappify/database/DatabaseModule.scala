@@ -6,7 +6,7 @@ import org.flywaydb.core.Flyway
 import slick.jdbc.JdbcBackend.Database
 
 class DatabaseModule(config: Config, configuration: DatabaseConfiguration) {
-  val database = Database.forConfig("scrappify.database", config = config)
+  lazy val database = Database.forConfig("scrappify.database", config = config)
 
   def init(): Unit = {
     val schemaLocations = List("db/migration")

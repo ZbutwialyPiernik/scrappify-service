@@ -11,11 +11,14 @@ case class PageRequest(index: Int, size: Int) {
 }
 
 
-case class Page[T](index: Int, size: Int, items: Seq[T], totalItems: Int) {
+case class Page[A](index: Int, size: Int, items: Seq[A], totalItems: Int) {
   require(index >= 0, "Index must be non negative")
   require(size >= 1, "Size must be greater than zero")
   require(totalItems >= 0, "Total numbers must be non negative")
   require(totalItems >= items.size, "Total items must be greater than or same number of items")
 
   def offset: Int = index * size
+
+  final def map[B](f: A => B): Page[B] = Page(this.index, this.size, items.map(f(_)), this.totalItems)
+
 }

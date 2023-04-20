@@ -3,7 +3,7 @@ package com.zbutwialypiernik.scrappify.product
 import cats.data.EitherT
 import com.typesafe.scalalogging.StrictLogging
 import com.zbutwialypiernik.scrappify.api.v1.product.ProductRequest
-import com.zbutwialypiernik.scrappify.common.AsyncResult.{AsyncResult}
+import com.zbutwialypiernik.scrappify.common.AsyncResult.AsyncResult
 import com.zbutwialypiernik.scrappify.common.{NotFoundError, Page, PageRequest, ServiceError}
 import com.zbutwialypiernik.scrappify.database.TextSearchPostgresProfile.api._
 import com.zbutwialypiernik.scrappify.scheduler.SiteProductScheduler
@@ -17,14 +17,11 @@ import scala.util.{Failure, Success}
 
 case class UnsupportedSiteError(host: Host) extends ServiceError(s"Host $host is not supported")
 
-class ProductService(productRepository: SiteProductRepository, siteService: SiteService, siteProductScheduler: SiteProductScheduler)(implicit executionContext: ExecutionContext) extends StrictLogging {
+class SiteProductService(productRepository: SiteProductRepository, siteService: SiteService, siteProductScheduler: SiteProductScheduler)(implicit executionContext: ExecutionContext) extends StrictLogging {
 
-  def findProductById(id: Int): Future[Option[SiteProduct]] = productRepository.database.run(productRepository.findById(id))
+  def findProductById(id: Int): Future[Option[SiteProductWithPrice]] = productRepository.run(productRepository.findProductWithPrice(id))
 
-  def listPrices(productId: Int, page: PageRequest): Future[Seq[SiteProductSnapshot]] =
-    productRepository.listPrices(productId, page)
-
-  def listProducts(siteId: Option[Int] = Option.empty[Int], name: Option[String] = Option.empty[String], page: PageRequest): Future[Page[SiteProduct]] =
+  def listProducts(siteId: Option[Int] = Option.empty[Int], name: Option[String] = Option.empty[String], page: PageRequest): Future[Page[SiteProductWithPrice]] =
     productRepository.list(siteId, name, page)
 
   def create(request: ProductRequest): AsyncResult[SiteProduct] = {

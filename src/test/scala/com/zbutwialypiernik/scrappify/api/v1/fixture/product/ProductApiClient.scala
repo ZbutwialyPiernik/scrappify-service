@@ -19,7 +19,7 @@ trait ProductApiClient extends Matchers {
     Post(s"/api/v1/products/$id/refresh") ~!> routes ~> runRoute
 
   def listProductSnapshots(id: Int)(implicit routes: Route): RouteTestResult =
-    Get(s"/api/v1/products/$id/snapshot") ~!> routes ~> runRoute
+    Get(s"/api/v1/products/$id/snapshots") ~!> routes ~> runRoute
 
   def makePostRequest[T](url: String, body: T)(implicit toResponseMarshaller: ToEntityMarshaller[T], routes: Route): RouteTestResult =
     Post(url, body) ~!> routes ~> runRoute

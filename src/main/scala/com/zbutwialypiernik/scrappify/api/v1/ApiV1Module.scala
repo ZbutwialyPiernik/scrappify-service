@@ -11,14 +11,16 @@ import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.zbutwialypiernik.scrappify.api.ErrorHandlers
 import com.zbutwialypiernik.scrappify.api.v1.product.ProductApi
 import com.zbutwialypiernik.scrappify.api.v1.site.SiteApi
-import com.zbutwialypiernik.scrappify.product.ProductService
+import com.zbutwialypiernik.scrappify.product.SiteProductService
 import com.zbutwialypiernik.scrappify.scheduler.SiteProductScheduler
 import com.zbutwialypiernik.scrappify.site.SiteService
+import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshotService
 
 import scala.concurrent.ExecutionContext
 
-class ApiV1Module(productService: ProductService,
-                  siteService: SiteService,
+class ApiV1Module(siteService: SiteService,
+                  siteProductService: SiteProductService,
+                  siteProductSnapshotService: SiteProductSnapshotService,
                   siteProductScheduler: SiteProductScheduler)
                  (implicit system: ActorSystem, executionContext: ExecutionContext)
   extends ErrorHandlers {

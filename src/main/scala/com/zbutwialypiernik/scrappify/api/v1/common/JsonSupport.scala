@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCode
 import com.zbutwialypiernik.scrappify.api.v1.product.ProductRequest
 import com.zbutwialypiernik.scrappify.common.Page
-import com.zbutwialypiernik.scrappify.product.SiteProduct
+import com.zbutwialypiernik.scrappify.product.{SiteProduct, SiteProductWithPrice}
 import com.zbutwialypiernik.scrappify.site.Site
 import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot
 import cron4s.Cron
@@ -83,8 +83,9 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val productRequestFormat = jsonFormat4(ProductRequest.apply)
-  implicit val productResponseFormat = jsonFormat6(SiteProduct)
+  implicit val siteProductRequestFormat = jsonFormat4(ProductRequest.apply)
+  implicit val siteProductResponseFormat = jsonFormat6(SiteProduct)
+  implicit val siteProductWithPriceResponseFormat = jsonFormat9(SiteProductWithPrice.apply)
   implicit val productPriceResponseFormat = jsonFormat6(SiteProductSnapshot.apply)
   implicit val siteResponseFormat = jsonFormat3(Site.apply)
   implicit val errorResponseFormat = jsonFormat2(ErrorResponse.apply)
