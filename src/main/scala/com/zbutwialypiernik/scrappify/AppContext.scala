@@ -25,7 +25,7 @@ trait AppContext {
   lazy val siteProductModule: SiteProductModule = new SiteProductModule(databaseModule, siteModule.siteService, schedulerModule.siteProductScheduler)
   lazy val siteProductSnapshotModule: SiteSnapshotModule = new SiteSnapshotModule(databaseModule)
   lazy val scrappingModule: ScrappingModule = new ScrappingModule(JsoupBrowser(), clock, siteProductSnapshotModule.siteProductSnapshotService)
-  lazy val apiV1Module = new ApiV1Module(siteProductModule.productService, siteModule.siteService, schedulerModule.siteProductScheduler)
+  lazy val apiV1Module = new ApiV1Module(siteModule.siteService, siteProductModule.productService, siteProductSnapshotModule.siteProductSnapshotService, schedulerModule.siteProductScheduler)
 
   implicit def executionContext: ExecutionContext
   implicit def system: ActorSystem

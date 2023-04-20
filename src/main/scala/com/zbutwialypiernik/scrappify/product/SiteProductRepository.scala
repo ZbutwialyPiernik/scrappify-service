@@ -30,20 +30,22 @@ class SiteProductRepository(database: Database)(implicit executionContext: Execu
         .filterOpt(siteId)((a, b) => a._1.siteId === b)
         .sortBy(_._2.map(_.fetchTime).desc)
         .sortBy(_._1.id)
+        .map(pair => combineWithPrice(pair._1, pair._2))
 
     paginate(
       pageRequest,
       query
     )
-  }.map(_.map(p => SiteProductWithPrice(p._1.id, p._1.name, p._1.url, p._1.code, p._1.fetchCron, p._1.siteId, p._2.map(_.price), p._2.flatMap(_.currency), p._2.map(_.fetchTime))))
+  }
 
   def findProductWithPrice(productId: Int): DBIO[Option[SiteProductWithPrice]] =
-    siteProducts.filter(_.id === productId)
+    siteProducts
       .joinLeft(siteProductPrices)
       .on(_.id === _.productId)
+      .filter(_._1.id === productId)
       .sortBy(_._2.map(_.fetchTime).desc)
       .take(1)
-      .map(xd => combineWithPrice(xd._1, xd._2))
+      .map(pair => combineWithPrice(pair._1, pair._2))
       .result
       .headOption
 

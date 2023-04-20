@@ -46,7 +46,6 @@ class SchedulerModule(databaseConfiguration: DatabaseConfiguration,
     dataSource.setDatabaseName(databaseConfiguration.name)
     dataSource.setUser(databaseConfiguration.user)
     dataSource.setPassword(databaseConfiguration.password)
-
     dataSource
   }
 
