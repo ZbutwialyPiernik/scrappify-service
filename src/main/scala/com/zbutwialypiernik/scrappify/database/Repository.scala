@@ -13,7 +13,7 @@ import slick.dbio.{DBIO, DBIOAction, NoStream}
 import slick.jdbc.JdbcType
 import slick.lifted.Query
 
-import java.time.Instant
+import java.time.{Instant, LocalDate}
 import java.util.Currency
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -94,7 +94,7 @@ object Repository extends CustomType {
 
   val sites = TableQuery[Sites]
   val siteProducts = TableQuery[SiteProducts]
-  val siteProductPrices = TableQuery[SiteProductSnapshots]
+  val siteProductSnapshots = TableQuery[SiteProductSnapshots]
 
   class Sites(tag: Tag) extends Table[Site](tag, "site")
     with IdentifiableTable[Int]  {

@@ -7,10 +7,15 @@ import com.zbutwialypiernik.scrappify.site.Site
 import cron4s.{Cron, CronExpr}
 import io.lemonlabs.uri.{AbsoluteUrl, Url}
 
+import java.time.{Instant, LocalDate, LocalDateTime, ZoneOffset}
 import java.util.Currency
 import java.util.concurrent.TimeUnit
 
 trait CommonDataGenerators {
+
+  val GBP: Currency = Currency.getInstance("GBP")
+  val EUR: Currency = Currency.getInstance("EUR")
+  val USD: Currency = Currency.getInstance("USD")
 
   val faker = new Faker()
 
@@ -40,5 +45,11 @@ trait CommonDataGenerators {
   def samplePrice(): BigDecimal = BigDecimal(sampleNonNegativeInt(10000))
 
   def sampleCron(): CronExpr = Cron.unsafeParse("0 */30 * ? * *")
+
+  def instantOf(second: Int = 1, minute: Int = 1, hour: Int = 1, day: Int = 1, month: Int = 1, year: Int = 2023): Instant =
+    LocalDateTime.of(year, month, day, hour, minute, second).toInstant(ZoneOffset.UTC)
+
+  def localDateOf(day: Int = 1, month: Int = 1, year: Int = 2023): LocalDate =
+    LocalDate.of(year, month, day)
 
 }

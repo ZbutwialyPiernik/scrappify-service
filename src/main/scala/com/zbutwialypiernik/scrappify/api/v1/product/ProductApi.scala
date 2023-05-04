@@ -9,6 +9,7 @@ import com.zbutwialypiernik.scrappify.product.{SiteProductService, UnsupportedSi
 import com.zbutwialypiernik.scrappify.scheduler.SiteProductScheduler
 import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshotService
 
+import java.time.Duration
 import scala.concurrent.ExecutionContext
 
 class ProductApi(val productService: SiteProductService,
@@ -42,6 +43,11 @@ class ProductApi(val productService: SiteProductService,
                 case Left(error: NotFoundError) => completeAsError(StatusCodes.NotFound, error.message)
                 case Right(_) => complete(StatusCodes.OK)
               }
+            }
+          },
+          path("price-chart") {
+            get {
+              complete(snapshotService.getPriceGraph(id, Duration.ofDays(30)))
             }
           },
         )

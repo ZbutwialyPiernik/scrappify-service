@@ -28,7 +28,7 @@ trait DatabaseIntegrationTest
 
   override def afterContainersStart(container: Containers): Unit = {
     val config = loadConfig(container)
-    databaseModule = new DatabaseModule(config, DatabaseConfiguration(container.jdbcUrl,container.username, container.databaseName, container.password));
+    databaseModule = new DatabaseModule(config, DatabaseConfiguration(container.jdbcUrl,container.username, container.databaseName, container.password))
     afterDatabaseStart(container)
   }
 
@@ -49,8 +49,7 @@ trait DatabaseIntegrationTest
 
   def runBlocking[R](a: DBIO[R]): R = Await.result(databaseModule.database.run(a), 1 seconds)
 
-  def runBlocking(a: DBIO[Any]*): Unit = Await.result(databaseModule.database.run(DBIO.sequence(a)), 1 seconds)
-
+  def runBlocking(a: Seq[DBIO[Any]]): Unit = Await.result(databaseModule.database.run(DBIO.sequence(a)), 1 seconds)
 
 }
 

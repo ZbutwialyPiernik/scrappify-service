@@ -2,6 +2,7 @@ package com.zbutwialypiernik.scrappify.product
 
 import com.zbutwialypiernik.scrappify.DatabaseIntegrationTest
 import com.zbutwialypiernik.scrappify.fixture.CommonDataGenerators
+import com.zbutwialypiernik.scrappify.snapshot.fixture.SnapshotGenerator
 import com.zbutwialypiernik.scrappify.snapshot.{SiteProductSnapshot, SiteProductSnapshotRepository}
 import org.scalatest.Assertion
 import slick.dbio.DBIO
@@ -10,8 +11,10 @@ import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.util.Currency
 import scala.concurrent.ExecutionContext
 
-class SiteProductRepositoryTest extends DatabaseIntegrationTest
-  with CommonDataGenerators {
+class SiteProductRepositoryTest
+  extends DatabaseIntegrationTest
+    with CommonDataGenerators
+    with SnapshotGenerator {
 
   implicit val executionContext = ExecutionContext.global
 
@@ -19,37 +22,41 @@ class SiteProductRepositoryTest extends DatabaseIntegrationTest
 
   def siteProductSnapshotRepository = new SiteProductSnapshotRepository(databaseModule.database)
 
-  private val GBP: Currency = Currency.getInstance("GBP")
-  private val EUR: Currency = Currency.getInstance("EUR")
-  private val USD: Currency = Currency.getInstance("USD")
-
   "Should find price with latest fetch time" in {
     Given("Valid product")
     val product = createValidProduct()
+    And("Other valid product")
+    val product2 = createValidProduct()
     And("Snapshots with different fetch times and different prices")
-    runBlocking(
-      createSimpleSnapshot(product.id, 80, GBP, 1),
-      createSimpleSnapshot(product.id, 60, EUR, 2),
-      createSimpleSnapshot(product.id, 60, USD, 3, 5),
-      createSimpleSnapshot(product.id, 50, USD, 3, 8)
+    createSnapshots(
+      sampleSnapshot(product.id, 80, GBP, 1),
+      sampleSnapshot(product.id, 60, EUR, 2),
+      sampleSnapshot(product.id, 60, USD, 3, 5),
+      sampleSnapshot(product.id, 50, USD, 3, 8)
     )
-    When("Fetch product with price by id")
+    And("Snapshots for other product")
+    createSnapshots(
+      sampleSnapshot(product2.id, 100, GBP, 1, 23),
+      sampleSnapshot(product2.id, 100, EUR, 2, 23),
+      sampleSnapshot(product2.id, 100, USD, 3, 23)
+    )
+    When("Fetch first product with price by id")
     val productWithPriceOption = findProductWithPrice(product.id)
     Then("Product should have price of snapshot with latest fetch time")
-    shouldReturnProductAndPriceCombined(productWithPriceOption, product, 50, USD, instantOf(day = 3, hour = 8))
+    shouldMatchProductAndPriceCombined(productWithPriceOption, product, 50, USD, instantOf(day = 3, hour = 8))
   }
 
   "Should return empty options find when item has no defined prices" in {
     Given("Valid product")
     val product = createValidProduct()
-    And("Other product")
+    And("Other valid product")
     val product2 = createValidProduct()
     And("Snapshots with different fetch times and different prices")
-    runBlocking(
-      createSimpleSnapshot(product2.id, 80, GBP, 1),
-      createSimpleSnapshot(product2.id, 60, EUR, 2),
-      createSimpleSnapshot(product2.id, 60, USD, 3, 5),
-      createSimpleSnapshot(product2.id, 50, USD, 3, 8)
+    createSnapshots(
+      sampleSnapshot(product2.id, 80, GBP, 1),
+      sampleSnapshot(product2.id, 60, EUR, 2),
+      sampleSnapshot(product2.id, 60, USD, 3, 5),
+      sampleSnapshot(product2.id, 50, USD, 3, 8)
     )
     When("Fetch product with price by id")
     val productWithPriceOption = findProductWithPrice(product.id)
@@ -61,7 +68,7 @@ class SiteProductRepositoryTest extends DatabaseIntegrationTest
     runBlocking(siteProductRepository.findProductWithPrice(productId))
   }
 
-  private def shouldReturnProductAndPriceCombined(productWithPriceOption: Option[SiteProductWithPrice], product: SiteProduct, price: Int, currency: Currency, lastUpdate: Instant): Option[Assertion] =
+  private def shouldMatchProductAndPriceCombined(productWithPriceOption: Option[SiteProductWithPrice], product: SiteProduct, price: Int, currency: Currency, lastUpdate: Instant): Option[Assertion] =
     shouldMatchProductAndPrice(productWithPriceOption, product, Some(price), Some(currency), Some(lastUpdate))
 
   private def shouldMatchProductAndPrice(productWithPriceOption: Option[SiteProductWithPrice], product: SiteProduct, priceOption: Option[Int], currencyOption: Option[Currency], lastUpdateOption: Option[Instant]): Option[Assertion] = {
@@ -78,17 +85,14 @@ class SiteProductRepositoryTest extends DatabaseIntegrationTest
     }
   }
 
+  private def createSnapshots(siteProductSnapshot: SiteProductSnapshot*): Unit = {
+    runBlocking(siteProductSnapshot.map(siteProductSnapshotRepository.create(_)))
+  }
+
   private def createValidProduct(): SiteProduct =
     runBlocking {
       siteProductRepository.createAndFetch(sampleProduct())
     }
-
-  private def createSimpleSnapshot(productId: Int, price: Int, currency: Currency, dayOfMonth: Int, hour: Int = 1): DBIO[Int] =
-    siteProductSnapshotRepository.create(SiteProductSnapshot(0, price, Some(currency), Option.empty, instantOf(day = dayOfMonth, hour = hour), productId))
-
-  private def instantOf(year: Int = 2023, month: Int = 1, day: Int = 1, hour: Int = 1, minute: Int = 1, second: Int = 1): Instant =
-    LocalDateTime.of(year, month, day, hour, minute, second).toInstant(ZoneOffset.UTC)
-
 
 }
 

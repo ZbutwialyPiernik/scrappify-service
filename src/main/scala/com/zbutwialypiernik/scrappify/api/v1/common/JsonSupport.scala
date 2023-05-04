@@ -6,13 +6,13 @@ import com.zbutwialypiernik.scrappify.api.v1.product.ProductRequest
 import com.zbutwialypiernik.scrappify.common.Page
 import com.zbutwialypiernik.scrappify.product.{SiteProduct, SiteProductWithPrice}
 import com.zbutwialypiernik.scrappify.site.Site
-import com.zbutwialypiernik.scrappify.snapshot.SiteProductSnapshot
+import com.zbutwialypiernik.scrappify.snapshot.{DailyPrice, PriceChart, SiteProductSnapshot}
 import cron4s.Cron
 import cron4s.expr.CronExpr
 import io.lemonlabs.uri.{AbsoluteUrl, Host}
 import spray.json._
 
-import java.time.Instant
+import java.time.{Duration, Instant, LocalDate}
 import java.util.Currency
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
@@ -83,6 +83,28 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
+  implicit object LocalDateFormat extends JsonFormat[LocalDate] {
+    def write(localDate: LocalDate) = JsString(localDate.toString)
+
+    def read(value: JsValue) = {
+      value match {
+        case JsString(date) => LocalDate.parse(date)
+        case _ => deserializationError("Expected valid UTC date")
+      }
+    }
+  }
+
+  implicit object DurationFormat extends JsonFormat[Duration] {
+    def write(duration: Duration) = JsString(duration.toString)
+
+    def read(value: JsValue) = {
+      value match {
+        case JsString(date) => Duration.parse(date)
+        case _ => deserializationError("Expected valid UTC date")
+      }
+    }
+  }
+
   implicit val siteProductRequestFormat = jsonFormat4(ProductRequest.apply)
   implicit val siteProductResponseFormat = jsonFormat6(SiteProduct)
   implicit val siteProductWithPriceResponseFormat = jsonFormat9(SiteProductWithPrice.apply)
@@ -90,6 +112,9 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val siteResponseFormat = jsonFormat3(Site.apply)
   implicit val errorResponseFormat = jsonFormat2(ErrorResponse.apply)
   implicit val validationErrorResponseFormat = jsonFormat3(ValidationErrorResponse.apply)
+  implicit val priceGraphFormat = jsonFormat2(DailyPrice.apply)
+  implicit val dailyPriceFormat = jsonFormat2(PriceChart.apply)
+
   implicit def pageFormat[T: JsonFormat]: RootJsonFormat[Page[T]] = jsonFormat4(Page.apply[T])
 
 }
